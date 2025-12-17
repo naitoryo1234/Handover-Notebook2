@@ -1,0 +1,77 @@
+# ===========================================
+# Cursor AI Ignore File
+# AIがインデックスしないファイル/フォルダを指定
+# ===========================================
+
+# 依存関係 (巨大)
+node_modules/
+.pnp/
+.pnp.js
+.yarn/
+
+# ビルド生成物
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# ロックファイル (大きくAIに不要)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# キャッシュ・一時ファイル
+.cache/
+*.log
+*.tmp
+.turbo/
+
+# データベース
+*.db
+*.db-journal
+prisma/migrations/
+
+# 環境変数
+.env
+.env.*
+
+# Vercel
+.vercel/
+
+# Git
+.git/
+
+# OS システムファイル
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# 画像・アセット (バイナリ)
+public/uploads/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.mp4
+*.webm
+
+# Electron
+main/
+electron-builder.yml
+
+# テスト・カバレッジ
+coverage/
+*.test.ts
+*.spec.ts
+
+# 古いドキュメント (任意)
+history/
+starters/
+
+# AIホスト用ドキュメント (初期化時のみ必要)
+# docs/ai-host/

@@ -222,6 +222,193 @@ export async function searchPatientsForSelect(query: string) {
 }
 
 /**
+ * Global search across patients and their records
+ * Searches: name, kana, phone, memo (Pinned Note), ClinicalRecord content
+ * Returns patients with hit information (where the match was found)
+ */
+export type GlobalSearchResult = {
+    patient: {
+        id: string;
+        name: string;
+        kana: string;
+        pId: number;
+        phone: string | null;
+    };
+    hits: Array<{
+        field: 'name' | 'kana' | 'phone' | 'memo' | 'record';
+        preview: string;
+        date?: string;
+    }>;
+};
+
+export async function searchPatientsGlobal(query: string): Promise<GlobalSearchResult[]> {
+    if (!query || query.length < 2) return [];
+
+    const q = query.trim();
+    const kanaVariants = getKanaVariants(q);
+
+    // 1. Search in Patient fields (name, kana, phone, memo)
+    const patientConditions = [
+        ...kanaVariants.map(v => ({ name: { contains: v, mode: 'insensitive' as const } })),
+        ...kanaVariants.map(v => ({ kana: { contains: v, mode: 'insensitive' as const } })),
+        { phone: { contains: q } },
+        { memo: { contains: q, mode: 'insensitive' as const } },
+    ];
+
+    const patientsFromPatient = await prisma.patient.findMany({
+        where: {
+            OR: patientConditions,
+            deletedAt: null
+        },
+        select: {
+            id: true,
+            name: true,
+            kana: true,
+            pId: true,
+            phone: true,
+            memo: true,
+        },
+        take: 20,
+        orderBy: { updatedAt: 'desc' }
+    });
+
+    // 2. Search in ClinicalRecord fields (subjective, objective, assessment, plan)
+    const recordConditions = [
+        { subjective: { contains: q, mode: 'insensitive' as const } },
+        { objective: { contains: q, mode: 'insensitive' as const } },
+        { assessment: { contains: q, mode: 'insensitive' as const } },
+        { plan: { contains: q, mode: 'insensitive' as const } },
+    ];
+
+    const recordsWithPatient = await prisma.clinicalRecord.findMany({
+        where: {
+            OR: recordConditions,
+            patient: { deletedAt: null }
+        },
+        select: {
+            id: true,
+            subjective: true,
+            objective: true,
+            assessment: true,
+            plan: true,
+            visitDate: true,
+            patient: {
+                select: {
+                    id: true,
+                    name: true,
+                    kana: true,
+                    pId: true,
+                    phone: true,
+                    memo: true,
+                }
+            }
+        },
+        take: 50,
+        orderBy: { visitDate: 'desc' }
+    });
+
+    // 3. Build result map (patient ID -> result)
+    const resultMap = new Map<string, GlobalSearchResult>();
+
+    // Helper to add hit
+    const addHit = (
+        patient: { id: string; name: string; kana: string; pId: number; phone: string | null },
+        hit: GlobalSearchResult['hits'][0]
+    ) => {
+        if (!resultMap.has(patient.id)) {
+            resultMap.set(patient.id, { patient, hits: [] });
+        }
+        // Avoid duplicate hits (same field and similar preview)
+        const existing = resultMap.get(patient.id)!;
+        const isDuplicate = existing.hits.some(h => h.field === hit.field && h.preview === hit.preview);
+        if (!isDuplicate) {
+            existing.hits.push(hit);
+        }
+    };
+
+    // Helper to extract preview (show around the match)
+    const extractPreview = (text: string | null, maxLen = 60): string => {
+        if (!text) return '';
+        const lowerText = text.toLowerCase();
+        const lowerQ = q.toLowerCase();
+        const idx = lowerText.indexOf(lowerQ);
+        if (idx === -1) return text.slice(0, maxLen) + (text.length > maxLen ? '...' : '');
+        const start = Math.max(0, idx - 20);
+        const end = Math.min(text.length, idx + q.length + 40);
+        let preview = text.slice(start, end);
+        if (start > 0) preview = '...' + preview;
+        if (end < text.length) preview = preview + '...';
+        return preview;
+    };
+
+    // Process patient matches
+    for (const p of patientsFromPatient) {
+        const patient = { id: p.id, name: p.name, kana: p.kana, pId: p.pId, phone: p.phone };
+
+        // Check which field matched
+        const lowerQ = q.toLowerCase();
+        for (const v of kanaVariants) {
+            if (p.name.toLowerCase().includes(v.toLowerCase())) {
+                addHit(patient, { field: 'name', preview: p.name });
+                break;
+            }
+        }
+        for (const v of kanaVariants) {
+            if (p.kana.toLowerCase().includes(v.toLowerCase())) {
+                addHit(patient, { field: 'kana', preview: p.kana });
+                break;
+            }
+        }
+        if (p.phone && p.phone.includes(q)) {
+            addHit(patient, { field: 'phone', preview: p.phone });
+        }
+        if (p.memo && p.memo.toLowerCase().includes(lowerQ)) {
+            addHit(patient, { field: 'memo', preview: extractPreview(p.memo) });
+        }
+    }
+
+    // Process record matches
+    for (const r of recordsWithPatient) {
+        const patient = {
+            id: r.patient.id,
+            name: r.patient.name,
+            kana: r.patient.kana,
+            pId: r.patient.pId,
+            phone: r.patient.phone
+        };
+        const lowerQ = q.toLowerCase();
+        const dateStr = r.visitDate.toLocaleDateString('ja-JP');
+
+        // Check which SOAP field matched
+        const fields = [
+            { name: 'subjective' as const, value: r.subjective },
+            { name: 'objective' as const, value: r.objective },
+            { name: 'assessment' as const, value: r.assessment },
+            { name: 'plan' as const, value: r.plan },
+        ];
+
+        for (const f of fields) {
+            if (f.value && f.value.toLowerCase().includes(lowerQ)) {
+                addHit(patient, {
+                    field: 'record',
+                    preview: extractPreview(f.value),
+                    date: dateStr
+                });
+                break; // Only one hit per record
+            }
+        }
+    }
+
+    // 4. Convert map to array and limit results
+    const results = Array.from(resultMap.values());
+
+    // Sort by number of hits (more hits = more relevant)
+    results.sort((a, b) => b.hits.length - a.hits.length);
+
+    return results.slice(0, 20);
+}
+
+/**
  * Create a new patient (Simple version for Customer Notebook)
  */
 export async function addPatientSimple(data: {

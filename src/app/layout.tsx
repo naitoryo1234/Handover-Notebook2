@@ -25,7 +25,7 @@ export default function RootLayout({
       <body className={`${inter.className} h-full bg-mesh-gradient text-slate-900`}>
         <div className="h-full flex flex-col">
           {/* ガラスモーフィズムヘッダー */}
-          <header className="sticky top-0 z-50 flex-none glass-header transition-all duration-300">
+          <header className="sticky top-0 z-50 flex-none glass-header transition-all duration-300 isolate">
             <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-6">
               <Link
                 href="/"
@@ -46,7 +46,7 @@ export default function RootLayout({
           </header>
 
           {/* メインコンテンツ */}
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto relative z-0">
             <div className="max-w-7xl mx-auto px-6 py-8">
               {children}
             </div>
