@@ -238,3 +238,52 @@ GEMINI_API_KEY=your_api_key_here
 - **AI機能拡張**: 過去履歴からの自動サジェスト (Gemini API安定化待ち)
 - **予約連携強化**: 予約からのワンクリック記録作成
 - **データエクスポート**: 顧客データのCSV/PDF出力
+
+
+## v1.6.0 (2025-12-17)
+
+### 変更内容
+- **Groq Whisper 高精度音声入力統合**
+  - Web Speech API を MediaRecorder + Groq `whisper-large-v3` API に置き換え
+  - `transcribeAudio` Server Action を新規作成 (src/actions/groqActions.ts)
+  - `MobileVoiceInput.tsx` を Groq 対応にリファクタリング
+  - `CustomerDetailClient.tsx` の「記録を追加」音声入力を Groq 対応に移行
+  - HTTPセキュアコンテキストチェック追加 (HTTPS/localhost以外ではマイク使用不可警告を表示)
+
+- **PostgreSQL移行 (Neon/Vercel連携)**
+  - SQLite (`file:./local.db`) から PostgreSQL (Neon) にデータベースを移行
+  - `prisma/schema.prisma` の `provider` を `postgresql` に変更
+  - Vercel Storage (Neon) 連携により本番環境でのDB動作を実現
+  - 20名分のデモデータを本番DBに投入済み
+
+- **Next.js CVE脆弱性対応**
+  - Next.js を `16.0.8` から `16.0.10` に更新
+  - React Server Components CVE (React2Shell) への対応完了
+
+- **モバイルUI修正**
+  - ハンバーガーメニューのバックドロップ透過問題を修正
+  - `bg-black/20` → `bg-black/50`、`backdrop-blur-sm` → `backdrop-blur-md` に変更
+
+- **セキュリティ強化**
+  - `.gitignore` に `.env`, `.env.local`, `.env*.local` を追加
+  - Git履歴からの `.env` 漏洩対応として orphan ブランチで履歴をリセット
+  - Groq/Gemini APIキーの再発行・ローテーション完了
+
+- **環境変数整理**
+  - `.env` をテンプレート化 (秘密情報なし、コミット可)
+  - `.env.local` に実際のキーを集約 (Gitから除外)
+
+### 変更の背景
+- Web Speech API の認識精度が低かったため、高精度なGroq Whisper APIへ移行。
+- Vercel本番デプロイではSQLiteファイルアクセス不可のため、Neon PostgreSQLへ移行。
+- Vercelからのセキュリティ警告 (CVE, Secrets Rotation) に即時対応。
+
+---
+
+## 次回予定
+
+- **Reservation Notebookの刷新**: Customer Notebookと同様のSaaS品質向上
+- **モバイル音声入力のHTTPSテスト**: Vercel本番環境でスマホからの音声入力動作確認
+- **AI機能拡張**: 過去履歴からの自動サジェスト
+- **予約連携強化**: 予約からのワンクリック記録作成
+- **データエクスポート**: 顧客データのCSV/PDF出力
