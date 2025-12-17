@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { AlertCircle, CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, AlertTriangle, Info, X, Undo2 } from 'lucide-react';
 
 // Toast types
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -11,11 +11,13 @@ export interface Toast {
     message: string;
     type: ToastType;
     duration?: number;
+    undoAction?: () => void;
 }
 
 interface ToastContextType {
     toasts: Toast[];
     showToast: (message: string, type?: ToastType, duration?: number) => void;
+    showUndoToast: (message: string, onUndo: () => void, duration?: number) => void;
     dismissToast: (id: string) => void;
 }
 
@@ -56,13 +58,29 @@ const iconStyles = {
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
     const Icon = icons[toast.type];
 
+    const handleUndo = () => {
+        if (toast.undoAction) {
+            toast.undoAction();
+            onDismiss();
+        }
+    };
+
     return (
         <div
-            className={`flex items-start gap-3 p-4 rounded-lg border shadow-lg animate-in slide-in-from-right-full duration-300 ${styles[toast.type]}`}
+            className={`flex items-center gap-3 p-4 rounded-lg border shadow-lg animate-in slide-in-from-right-full duration-300 ${styles[toast.type]}`}
             role="alert"
         >
-            <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${iconStyles[toast.type]}`} />
+            <Icon className={`w-5 h-5 flex-shrink-0 ${iconStyles[toast.type]}`} />
             <p className="flex-1 text-sm font-medium">{toast.message}</p>
+            {toast.undoAction && (
+                <button
+                    onClick={handleUndo}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                >
+                    <Undo2 className="w-4 h-4" />
+                    元に戻す
+                </button>
+            )}
             <button
                 onClick={onDismiss}
                 className="flex-shrink-0 p-1 rounded hover:bg-black/5 transition-colors"
@@ -92,12 +110,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    const showUndoToast = useCallback((message: string, onUndo: () => void, duration: number = 3000) => {
+        const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const newToast: Toast = { id, message, type: 'success', duration, undoAction: onUndo };
+
+        setToasts(prev => [...prev, newToast]);
+
+        // Auto dismiss
+        if (duration > 0) {
+            setTimeout(() => {
+                setToasts(prev => prev.filter(t => t.id !== id));
+            }, duration);
+        }
+    }, []);
+
     const dismissToast = useCallback((id: string) => {
         setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
     return (
-        <ToastContext.Provider value={{ toasts, showToast, dismissToast }}>
+        <ToastContext.Provider value={{ toasts, showToast, showUndoToast, dismissToast }}>
             {children}
             {/* Toast Container - Fixed position at top right */}
             <div className="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">

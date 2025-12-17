@@ -194,3 +194,18 @@ export async function completeAppointmentAction(appointmentId: string) {
         return { success: false, message: e.message || '完了処理に失敗しました' };
     }
 }
+
+export async function undoAppointmentStatusAction(appointmentId: string, previousStatus: string) {
+    if (!appointmentId || !previousStatus) return { success: false, message: 'パラメータが不足しています' };
+    try {
+        await import('@/services/appointmentService').then(s => s.updateAppointment(appointmentId, { status: previousStatus }));
+        revalidatePath('/');
+        revalidatePath('/reservation-notebook');
+        return { success: true };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+        console.error(e);
+        return { success: false, message: e.message || 'ステータス復元に失敗しました' };
+    }
+}
+
