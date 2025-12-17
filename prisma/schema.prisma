@@ -142,12 +142,14 @@ model Appointment {
 // Staff: スタッフマスタ
 // --------------------------------------------------------
 model Staff {
-  id        String   @id @default(uuid())
-  name      String
-  role      String   @default("Director") // Director, Therapist, Clerk, Other
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  role         String   @default("Director") // Director, Therapist, Clerk, Other
+  active       Boolean  @default(true)
+  loginId      String?  @unique  // ログインID
+  passwordHash String?            // bcryptハッシュ
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   records      ClinicalRecord[]
   appointments Appointment[]

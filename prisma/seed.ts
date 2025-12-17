@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { setHours, setMinutes, subDays, addDays, format } from 'date-fns'
+import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
 
@@ -65,12 +66,13 @@ async function main() {
     await prisma.patient.deleteMany({})
     await prisma.staff.deleteMany({})
 
-    // Staff
+    // Staff (with authentication)
+    const passwordHash = await bcrypt.hash('1111', 10);
     const director = await prisma.staff.create({
-        data: { id: 'staff-001', name: '高橋 院長', role: 'Director', active: true }
+        data: { id: 'staff-001', name: '高橋 院長', role: 'Director', active: true, loginId: 'admin', passwordHash }
     });
     const staffMember = await prisma.staff.create({
-        data: { id: 'staff-002', name: '佐々木 スタッフ', role: 'Staff', active: true }
+        data: { id: 'staff-002', name: '佐々木 スタッフ', role: 'Staff', active: true, loginId: 'staff', passwordHash }
     });
 
     const staffs = [director, staffMember];

@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, FileText, Calendar, Menu, X, Search } from 'lucide-react';
+import { Home, FileText, Calendar, Menu, X, Search, LogOut, User } from 'lucide-react';
 import { clsx } from 'clsx';
 import { GlobalSearchModal } from './GlobalSearchModal';
+import { useSession, signOut } from 'next-auth/react';
 
 export function GlobalNavigation() {
     const pathname = usePathname();
+    const { data: session } = useSession();
     const [isOpen, setIsOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -101,6 +103,26 @@ export function GlobalNavigation() {
                     })}
                 </nav>
 
+                {/* User Info in Drawer */}
+                {session?.user && (
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                        <div className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600">
+                            <User className="w-5 h-5 text-slate-400" />
+                            <span className="font-medium">{session.user.name}</span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setIsOpen(false);
+                                signOut({ callbackUrl: '/login' });
+                            }}
+                            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:bg-red-50 transition-all duration-200"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span>ログアウト</span>
+                        </button>
+                    </div>
+                )}
+
                 <div className="mt-auto pt-8 border-t border-slate-100">
                     <p className="text-xs text-center text-slate-400">
                         &copy; Business Notebook
@@ -148,6 +170,24 @@ export function GlobalNavigation() {
                         </Link>
                     );
                 })}
+
+                {/* User Info & Logout */}
+                {session?.user && (
+                    <div className="flex items-center gap-3 ml-4 pl-4 border-l border-slate-200">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <User className="w-4 h-4 text-slate-400" />
+                            <span className="font-medium">{session.user.name}</span>
+                        </div>
+                        <button
+                            onClick={() => signOut({ callbackUrl: '/login' })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                            title="ログアウト"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            <span className="hidden xl:inline">ログアウト</span>
+                        </button>
+                    </div>
+                )}
             </nav>
 
             {/* Mobile Navigation - Search + Menu */}
