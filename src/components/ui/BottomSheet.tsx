@@ -34,7 +34,7 @@ export function BottomSheet({ isOpen, onClose, children, title }: BottomSheetPro
     if (!isVisible && !isOpen) return null;
 
     return (
-        <div className={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none`}>
+        <div className={`fixed inset-0 z-[100] flex items-end sm:items-center justify-center pointer-events-none`}>
             {/* Backdrop */}
             <div
                 className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto ${isOpen ? 'opacity-100' : 'opacity-0'

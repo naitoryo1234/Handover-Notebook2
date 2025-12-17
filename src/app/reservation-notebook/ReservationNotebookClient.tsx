@@ -284,9 +284,9 @@ export function ReservationNotebookClient({
 
             {/* モーダル */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur z-10">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-lg md:max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur z-10 shrink-0">
                             <h3 className="text-xl font-bold text-slate-800">
                                 {editingAppointment ? '予約を編集' : '新規予約を作成'}
                             </h3>
@@ -301,113 +301,123 @@ export function ReservationNotebookClient({
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-8">
-                            {/* 顧客選択 */}
-                            <div className="space-y-3">
-                                <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                    <User className="w-4 h-4" /> お客様
-                                </label>
-                                <CustomerSelector
-                                    patients={patients}
-                                    selectedPatientId={selectedPatientId}
-                                    onSelect={setSelectedPatientId}
-                                />
-                            </div>
-
-                            {/* 日時設定 */}
-                            <div className="space-y-3">
-                                <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                    日時・時間
-                                </label>
-                                <div className="grid grid-cols-[1.5fr,1fr,1fr] gap-3">
-                                    <input
-                                        type="date"
-                                        name="visitDate"
-                                        required
-                                        value={formDate}
-                                        onChange={(e) => setFormDate(e.target.value)}
-                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium text-slate-700"
-                                    />
-                                    <input
-                                        type="time"
-                                        name="visitTime"
-                                        required
-                                        value={formTime}
-                                        onChange={(e) => setFormTime(e.target.value)}
-                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium text-slate-700"
-                                    />
-                                    <select
-                                        name="duration"
-                                        defaultValue={editingAppointment?.duration || 60}
-                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium text-slate-700"
-                                    >
-                                        <option value="30">30分</option>
-                                        <option value="60">60分</option>
-                                        <option value="90">90分</option>
-                                        <option value="120">120分</option>
-                                    </select>
-                                </div>
-                                {/* クイックボタン */}
-                                <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
-                                    <div className="flex gap-2">
-                                        <button type="button" onClick={() => setQuickDate('today')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">今日</button>
-                                        <button type="button" onClick={() => setQuickDate('tomorrow')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">明日</button>
-                                        <button type="button" onClick={() => setQuickDate('nextWeek')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">来週</button>
+                        <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                                {/* 左カラム: 顧客・日時 */}
+                                <div className="space-y-8">
+                                    {/* 顧客選択 */}
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                            <User className="w-4 h-4" /> お客様
+                                        </label>
+                                        <CustomerSelector
+                                            patients={patients}
+                                            selectedPatientId={selectedPatientId}
+                                            onSelect={setSelectedPatientId}
+                                        />
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button type="button" onClick={() => addTime(15)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+15分</button>
-                                        <button type="button" onClick={() => addTime(30)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+30分</button>
-                                        <button type="button" onClick={() => addTime(60)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+60分</button>
+
+                                    {/* 日時設定 */}
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                            <Clock className="w-4 h-4" /> 日時・時間
+                                        </label>
+                                        <div className="grid grid-cols-[1.5fr,1fr,1fr] gap-3">
+                                            <input
+                                                type="date"
+                                                name="visitDate"
+                                                required
+                                                value={formDate}
+                                                onChange={(e) => setFormDate(e.target.value)}
+                                                className="w-full px-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm"
+                                            />
+                                            <input
+                                                type="time"
+                                                name="visitTime"
+                                                required
+                                                value={formTime}
+                                                onChange={(e) => setFormTime(e.target.value)}
+                                                className="w-full px-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm"
+                                            />
+                                            <select
+                                                name="duration"
+                                                defaultValue={editingAppointment?.duration || 60}
+                                                className="w-full px-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm bg-white"
+                                            >
+                                                <option value="30">30分</option>
+                                                <option value="60">60分</option>
+                                                <option value="90">90分</option>
+                                                <option value="120">120分</option>
+                                            </select>
+                                        </div>
+                                        {/* クイックボタン */}
+                                        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                            <div className="flex gap-2 flex-shrink-0">
+                                                <button type="button" onClick={() => setQuickDate('today')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">今日</button>
+                                                <button type="button" onClick={() => setQuickDate('tomorrow')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">明日</button>
+                                                <button type="button" onClick={() => setQuickDate('nextWeek')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">来週</button>
+                                            </div>
+                                            <div className="flex gap-2 flex-shrink-0">
+                                                <button type="button" onClick={() => addTime(15)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+15分</button>
+                                                <button type="button" onClick={() => addTime(30)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+30分</button>
+                                                <button type="button" onClick={() => addTime(60)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+60分</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 担当者 */}
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-bold text-slate-700">担当者</label>
+                                        <select
+                                            name="staffId"
+                                            className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-600"
+                                        >
+                                            <option value="">担当者 (未定)</option>
+                                            <option value="demo-staff-1">高橋 院長</option>
+                                            <option value="demo-staff-2">佐々木 スタッフ</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* 右カラム: メモ・申し送り */}
+                                <div className="space-y-8">
+                                    {/* 受付メモ */}
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">
+                                            受付メモ
+                                        </label>
+                                        <p className="text-xs text-slate-400 mb-2">※1-2行程度の簡単な内容</p>
+                                        <textarea
+                                            name="memo"
+                                            rows={3}
+                                            defaultValue={editingAppointment?.memo || ''}
+                                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                                            placeholder="患者様からの要望など"
+                                        />
+                                    </div>
+
+                                    {/* 申し送り事項 */}
+                                    <div className="bg-red-50 border border-red-100 rounded-xl p-4 h-fit">
+                                        <label className="flex items-center gap-2 text-sm font-bold text-red-700 mb-2">
+                                            <AlertTriangle className="w-4 h-4" /> 申し送り事項
+                                        </label>
+                                        <p className="text-xs text-red-400 mb-3">
+                                            スタッフ間で共有すべき注意事項を入力してください。<br />
+                                            (タイムラインにて強調表示されます)
+                                        </p>
+                                        <textarea
+                                            name="adminMemo"
+                                            rows={3}
+                                            defaultValue={editingAppointment?.adminMemo || ''}
+                                            placeholder="例: 前回施術後に赤みが出たため注意"
+                                            className="w-full px-4 py-3 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-red-800 placeholder-red-300 bg-white resize-none"
+                                        />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 担当者（デモなので固定またはSelect） */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-bold text-slate-700">担当者</label>
-                                <select
-                                    name="staffId"
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-600"
-                                >
-                                    <option value="">担当者 (未定)</option>
-                                    <option value="demo-staff-1">高橋 院長</option>
-                                    <option value="demo-staff-2">佐々木 スタッフ</option>
-                                </select>
-                            </div>
-
-                            {/* 受付メモ・申し送り */}
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">
-                                        受付メモ
-                                    </label>
-                                    <p className="text-xs text-slate-400 mb-2">※1-2行程度の簡単な内容</p>
-                                    <textarea
-                                        name="memo"
-                                        rows={2}
-                                        defaultValue={editingAppointment?.memo || ''}
-                                        className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
-                                        placeholder="患者様からの要望など"
-                                    />
-                                </div>
-
-                                {/* 申し送り事項（Attention） */}
-                                <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-                                    <label className="flex items-center gap-2 text-sm font-bold text-red-700 mb-2">
-                                        <AlertTriangle className="w-4 h-4" /> 申し送り事項
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="adminMemo"
-                                        defaultValue={editingAppointment?.adminMemo || ''}
-                                        placeholder="スタッフ間での注意事項"
-                                        className="w-full px-4 py-2 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-red-800 placeholder-red-300 bg-white"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* 送信ボタン */}
-                            <div className="pt-2 flex items-center justify-end gap-3 sticky bottom-0 bg-white/90 backdrop-blur py-4 border-t border-slate-50 -mx-6 px-6 -mb-6 rounded-b-2xl">
+                            {/* 送信ボタン（下部に固定） */}
+                            <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
