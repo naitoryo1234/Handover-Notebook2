@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Users, FileText } from 'lucide-react';
 import { CustomerNotebookClient } from './CustomerNotebookClient';
 import { CustomerNotebookSearch } from './CustomerNotebookSearch';
+import { EmptyState, EmptyStateSearch } from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,8 +70,8 @@ export default async function CustomerNotebookPage({ searchParams }: PageProps) 
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-4 py-8 text-center text-slate-500 text-sm">
-                                    顧客が見つかりません
+                                <div className="p-2">
+                                    <EmptyStateSearch theme="indigo" query={query || undefined} />
                                 </div>
                             )}
                         </div>
@@ -83,14 +84,14 @@ export default async function CustomerNotebookPage({ searchParams }: PageProps) 
                     {selectedPatient ? (
                         <CustomerNotebookClient patient={selectedPatient} />
                     ) : (
-                        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center h-full flex flex-col justify-center items-center text-slate-500">
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                                <Users className="w-8 h-8 text-slate-400" />
-                            </div>
-                            <h3 className="text-lg font-medium text-slate-700 mb-2">顧客を選択してください</h3>
-                            <p className="text-sm">
-                                左の一覧から顧客を選択すると、<br />ノートを表示・編集できます
-                            </p>
+                        <div className="bg-white rounded-xl border border-slate-200 p-4 h-full flex items-center justify-center min-h-[300px]">
+                            <EmptyState
+                                icon={<Users className="w-full h-full" />}
+                                title="顧客を選択してください"
+                                description="左の一覧から顧客を選択すると、ノートを表示・編集できます"
+                                theme="indigo"
+                                size="lg"
+                            />
                         </div>
                     )}
                 </div>

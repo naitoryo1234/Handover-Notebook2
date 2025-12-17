@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addMinutes, addDays, addWeeks } from 'date-fns';
-import { ja } from 'date-fns/locale';
-import { Clock, User, Plus, Edit3, X, Check, Ban, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
+import { Clock, User, Plus, Edit3, X, Ban, AlertTriangle } from 'lucide-react';
 import { Appointment } from '@/services/appointmentService';
 import { cancelAppointmentAction, scheduleAppointment, updateAppointmentAction } from '@/actions/appointmentActions';
 import { CustomerSelector } from '@/components/appointment/CustomerSelector';
+import { EmptyStateReservations } from '@/components/ui/EmptyState';
 
 interface Patient {
     id: string;
@@ -209,14 +209,13 @@ export function ReservationNotebookClient({
                         </div>
                     ))
                 ) : (
-                    <div className="px-6 py-16 text-center">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
-                            <CalendarIcon className="w-10 h-10 text-slate-300" />
-                        </div>
-                        <h3 className="text-lg font-bold text-slate-700 mb-1">今日の予約はありません</h3>
-                        <p className="text-sm text-slate-500">
-                            左上のボタンから新しい予約を追加しましょう
-                        </p>
+                    <div className="px-4 py-4">
+                        <EmptyStateReservations
+                            action={{
+                                label: '新規予約を作成',
+                                onClick: handleNewAppointment
+                            }}
+                        />
                     </div>
                 )}
             </div>

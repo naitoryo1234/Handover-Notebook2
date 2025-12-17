@@ -10,6 +10,36 @@ import { unlink } from 'fs/promises';
 import { join } from 'path';
 
 /**
+ * Quick update patient (name, kana, phone only)
+ * For mobile QuickEditModal
+ */
+export async function quickUpdatePatient(
+    patientId: string,
+    data: { name: string; kana: string; phone: string }
+) {
+    if (!data.name || !data.kana) {
+        return { success: false, error: '名前とフリガナは必須です' };
+    }
+
+    try {
+        await prisma.patient.update({
+            where: { id: patientId },
+            data: {
+                name: data.name,
+                kana: data.kana,
+                phone: data.phone || null,
+            }
+        });
+
+        revalidatePath(`/customers/${patientId}`);
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to quick update patient:', error);
+        return { success: false, error: '顧客情報の更新に失敗しました' };
+    }
+}
+
+/**
  * Create a new patient
  */
 export async function addPatient(formData: FormData) {
