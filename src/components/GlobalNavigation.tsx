@@ -75,7 +75,7 @@ export function GlobalNavigation() {
                 <div className="fixed inset-0 z-[100] lg:hidden">
                     {/* Backdrop */}
                     <div
-                        className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-in fade-in"
+                        className="absolute inset-0 bg-black/50 backdrop-blur-md animate-in fade-in"
                         onClick={() => setIsOpen(false)}
                     />
 
