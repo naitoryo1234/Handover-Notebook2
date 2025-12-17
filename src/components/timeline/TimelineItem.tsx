@@ -339,11 +339,20 @@ export function TimelineItem({ entry, isLast, patientId, onDelete, onUpdate }: T
                             </div>
                         )}
 
-                        {/* Sub Content (e.g. Menu) */}
+                        {/* Sub Content (e.g. Menu or Appointment Memo) */}
                         {entry.subContent && (
-                            <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
-                                {entry.subContent}
-                            </p>
+                            <div className="mt-2 text-xs">
+                                {isAppointment ? (
+                                    <span className="text-slate-600">
+                                        <span className="font-bold text-slate-500 mr-1">予約メモ:</span>
+                                        {entry.subContent}
+                                    </span>
+                                ) : (
+                                    <p className="text-slate-400 mt-1.5 flex items-center gap-1">
+                                        {entry.subContent}
+                                    </p>
+                                )}
+                            </div>
                         )}
                     </div>
 
