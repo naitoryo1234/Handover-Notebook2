@@ -51,7 +51,7 @@ export default function RootLayout({
             </header>
 
             {/* メインコンテンツ */}
-            <main className="flex-1 overflow-y-auto relative z-0">
+            <main className="flex-1 overflow-y-auto relative">
               <div className="max-w-7xl mx-auto px-6 py-8">
                 {children}
               </div>
