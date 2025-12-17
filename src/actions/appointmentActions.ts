@@ -23,6 +23,7 @@ export async function scheduleAppointment(formData: FormData) {
     try {
         await createAppointment(patientId, startAt, memo, staffId || undefined, duration, adminMemo, operatorId || undefined);
         revalidatePath('/');
+        revalidatePath('/reservation-notebook');
         revalidatePath(`/patients/${patientId}`);
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -114,6 +115,7 @@ export async function updateAppointmentAction(formData: FormData) {
         await updateAppointment(id, updateData);
         revalidatePath('/');
         revalidatePath('/appointments');
+        revalidatePath('/reservation-notebook');
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -127,6 +129,7 @@ export async function checkInAppointmentAction(appointmentId: string) {
     try {
         await import('@/services/appointmentService').then(s => s.checkInAppointment(appointmentId));
         revalidatePath('/');
+        revalidatePath('/reservation-notebook');
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -140,6 +143,7 @@ export async function cancelCheckInAction(appointmentId: string) {
     try {
         await import('@/services/appointmentService').then(s => s.cancelCheckIn(appointmentId));
         revalidatePath('/');
+        revalidatePath('/reservation-notebook');
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -174,6 +178,7 @@ export async function toggleAdminMemoResolutionAction(
         await import('@/services/appointmentService').then(s => s.updateAppointment(appointmentId, updateData));
         revalidatePath('/');
         revalidatePath('/appointments');
+        revalidatePath('/reservation-notebook');
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -187,6 +192,7 @@ export async function completeAppointmentAction(appointmentId: string) {
     try {
         await import('@/services/appointmentService').then(s => s.updateAppointment(appointmentId, { status: 'completed' }));
         revalidatePath('/');
+        revalidatePath('/reservation-notebook');
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -208,4 +214,3 @@ export async function undoAppointmentStatusAction(appointmentId: string, previou
         return { success: false, message: e.message || 'ステータス復元に失敗しました' };
     }
 }
-
