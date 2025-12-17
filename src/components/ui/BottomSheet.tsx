@@ -21,6 +21,7 @@ export function BottomSheet({ isOpen, onClose, children, title }: BottomSheetPro
             document.body.style.overflow = 'hidden';
         } else {
             // Delay hiding for animation
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             const timer = setTimeout(() => setIsVisible(false), 300);
             document.body.style.overflow = '';
             return () => clearTimeout(timer);

@@ -322,7 +322,7 @@ export function ReservationNotebookClient({
                                 <div className="grid grid-cols-[1.5fr,1fr,1fr] gap-3">
                                     <input
                                         type="date"
-                                        name="date"
+                                        name="visitDate"
                                         required
                                         value={formDate}
                                         onChange={(e) => setFormDate(e.target.value)}
@@ -330,7 +330,7 @@ export function ReservationNotebookClient({
                                     />
                                     <input
                                         type="time"
-                                        name="time"
+                                        name="visitTime"
                                         required
                                         value={formTime}
                                         onChange={(e) => setFormTime(e.target.value)}
