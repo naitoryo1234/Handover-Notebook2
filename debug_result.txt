@@ -1,0 +1,23 @@
+Searching for customer: 山下 里美
+Found 1 customers.
+
+-- - Inspecting Customer: 山下 里美 (ID: e6258a3b-8266-4a43-991c-1f927c521395) --- 
+  Found 18 appointments: 
+    [scheduled] 2026-01-15T01:00:00.000Z (Local: 2026/1/15 10:00:00) (ID: 47fe1e68-b43e-4348-8448-f932a2ac1c70)
+    [completed] 2026-01-01T04:00:00.000Z (Local: 2026/1/1 13:00:00) (ID: d26550fc-87b5-45f6-8346-e92540a81090)
+    [completed] 2025-12-18T05:00:00.000Z (Local: 2025/12/18 14:00:00) (ID: 3b8b387e-e0a5-4803-a7dc-ba979aaac818)
+    [completed] 2025-12-04T02:00:00.000Z (Local: 2025/12/4 11:00:00) (ID: ce6f7575-241b-4fb4-bdbd-c1f5d04da5a9)
+    [completed] 2025-11-18T07:00:00.000Z (Local: 2025/11/18 16:00:00) (ID: 78e3a329-f7eb-4c30-a984-175938bb963a)
+    [completed] 2025-11-06T07:00:00.000Z (Local: 2025/11/6 16:00:00) (ID: 841120c1-8f93-4e89-b632-31fc020df5a9)
+    [completed] 2025-10-23T02:00:00.000Z (Local: 2025/10/23 11:00:00) (ID: 79621def-64a6-497e-a586-97e3c8dda247)
+    [completed] 2025-10-07T08:00:00.000Z (Local: 2025/10/7 17:00:00) (ID: 4f447335-04e6-487c-90f4-c66917204f55)
+    [completed] 2025-09-24T02:00:00.000Z (Local: 2025/9/24 11:00:00) (ID: 46d1b4d3-5b04-4dc3-93e8-a1e35b0f28cb)
+    [completed] 2025-09-09T07:00:00.000Z (Local: 2025/9/9 16:00:00) (ID: 4e728636-2f5e-4361-8021-567bc59bde7b)
+    [completed] 2025-08-27T02:00:00.000Z (Local: 2025/8/27 11:00:00) (ID: 57d86974-9fc4-4e82-8e5d-81ff2c65f778)
+    [completed] 2025-08-13T01:00:00.000Z (Local: 2025/8/13 10:00:00) (ID: 940105fc-cb87-44c2-9758-72ccac898cb3)
+    [completed] 2025-07-29T04:00:00.000Z (Local: 2025/7/29 13:00:00) (ID: e239cf24-43bd-428b-bb6e-57d19fe06a24)
+    [completed] 2025-07-15T06:00:00.000Z (Local: 2025/7/15 15:00:00) (ID: afefb74f-ba88-430c-b0a9-a121581c4948)
+    [completed] 2025-07-01T07:00:00.000Z (Local: 2025/7/1 16:00:00) (ID: e57923c9-2545-41fb-8bc0-d09d4930e623)
+    [completed] 2025-06-17T02:00:00.000Z (Local: 2025/6/17 11:00:00) (ID: 9ef74d87-1464-4ef8-9c8b-949273a649cb)
+    [completed] 2025-06-04T08:00:00.000Z (Local: 2025/6/4 17:00:00) (ID: 68e22625-0c17-40fb-af5f-6bbaa6b31ef0)
+    [completed] 2025-05-20T08:00:00.000Z (Local: 2025/5/20 17:00:00) (ID: da454f25-737b-4f0e-bf16-7e64ac9cea20)

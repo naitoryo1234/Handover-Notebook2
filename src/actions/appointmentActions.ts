@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createAppointment, cancelAppointment, updateAppointment } from '@/services/appointmentService';
+import { createAppointment, cancelAppointment, updateAppointment } from '@/services/appointmentServiceV2';
 import { redirect } from 'next/navigation';
 
 export async function scheduleAppointment(formData: FormData) {

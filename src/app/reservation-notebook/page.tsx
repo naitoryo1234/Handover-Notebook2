@@ -1,4 +1,4 @@
-import { getTodaysAppointments } from '@/services/appointmentService';
+import { getTodaysAppointments } from '@/services/appointmentServiceV2';
 import { getPatients } from '@/services/patientService';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';

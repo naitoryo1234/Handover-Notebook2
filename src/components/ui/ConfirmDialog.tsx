@@ -13,7 +13,8 @@ interface ConfirmDialogProps {
     description?: string;
     confirmLabel?: string;
     cancelLabel?: string;
-    variant?: 'danger' | 'primary' | 'warning';
+    hideCancel?: boolean;
+    variant?: 'danger' | 'primary' | 'warning' | 'error';
     onConfirm: () => void | Promise<void>;
 }
 
@@ -25,6 +26,7 @@ export function ConfirmDialog({
     confirmLabel = LABELS.DIALOG.DEFAULT_CONFIRM,
     cancelLabel = LABELS.DIALOG.DEFAULT_CANCEL,
     variant = 'primary',
+    hideCancel = false,
     onConfirm,
 }: ConfirmDialogProps) {
     const [loading, setLoading] = useState(false);
@@ -57,6 +59,12 @@ export function ConfirmDialog({
     const config = {
         danger: {
             icon: Trash2,
+            headerBg: 'bg-red-600',
+            buttonBg: 'bg-red-600 hover:bg-red-700',
+            iconColor: 'text-red-600',
+        },
+        error: {
+            icon: AlertTriangle,
             headerBg: 'bg-red-600',
             buttonBg: 'bg-red-600 hover:bg-red-700',
             iconColor: 'text-red-600',
@@ -95,8 +103,8 @@ export function ConfirmDialog({
             >
                 {/* Header */}
                 <div className={`${config.headerBg} text-white p-4 flex items-center gap-3`}>
-                    <Icon className="w-5 h-5" />
-                    <h3 className="font-bold text-base flex-1">{title}</h3>
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <h3 className="font-bold text-base flex-1 break-words">{title}</h3>
                     {!loading && (
                         <button
                             onClick={() => onOpenChange(false)}
@@ -111,22 +119,24 @@ export function ConfirmDialog({
                 {/* Body */}
                 <div className="p-6">
                     {description && (
-                        <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                        <p className="text-sm text-slate-600 leading-relaxed mb-6 whitespace-pre-wrap">
                             {description}
                         </p>
                     )}
 
                     {/* Actions */}
                     <div className="flex gap-3" style={{ pointerEvents: 'auto' }}>
-                        <button
-                            onClick={() => onOpenChange(false)}
-                            disabled={loading}
-                            type="button"
-                            style={{ pointerEvents: 'auto' }}
-                            className="flex-1 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {cancelLabel}
-                        </button>
+                        {!hideCancel && (
+                            <button
+                                onClick={() => onOpenChange(false)}
+                                disabled={loading}
+                                type="button"
+                                style={{ pointerEvents: 'auto' }}
+                                className="flex-1 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {cancelLabel}
+                            </button>
+                        )}
                         <button
                             onClick={handleConfirm}
                             disabled={loading}

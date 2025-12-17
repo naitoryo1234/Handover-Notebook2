@@ -32,14 +32,32 @@ const hasOverlap = (start1: number, end1: number, start2: number, end2: number) 
 // Define the Prisma return type
 // Note: adminMemo, isMemoResolved, arrivedAt are already in the Prisma schema
 // so AppointmentGetPayload correctly includes them.
+// Define the Prisma return type with select
 type AppointmentWithRel = Prisma.AppointmentGetPayload<{
-    include: {
+    select: {
+        id: true,
+        startAt: true,
+        duration: true,
+        status: true,
+        memo: true,
+        adminMemo: true,
+        isMemoResolved: true,
+        adminMemoResolvedBy: true,
+        adminMemoResolvedAt: true,
+        arrivedAt: true,
+        patientId: true,
+        staffId: true,
+        staff: true,
         patient: {
-            include: {
+            select: {
+                id: true,
+                name: true,
+                kana: true,
+                tags: true,
+                memo: true,
                 _count: { select: { records: true } }
             }
-        },
-        staff: true,
+        }
     }
 }>;
 
@@ -51,13 +69,30 @@ export const getTodaysAppointments = async (date: Date = getNow()): Promise<Appo
         where: {
             startAt: { gte: start, lte: end },
         },
-        include: {
+        select: {
+            id: true,
+            startAt: true,
+            duration: true,
+            status: true,
+            memo: true,
+            adminMemo: true,
+            isMemoResolved: true,
+            adminMemoResolvedBy: true,
+            adminMemoResolvedAt: true,
+            arrivedAt: true,
+            patientId: true,
+            staffId: true,
+            staff: true,
             patient: {
-                include: {
+                select: {
+                    id: true,
+                    name: true,
+                    kana: true,
+                    tags: true,
+                    memo: true,
                     _count: { select: { records: true } }
                 }
-            },
-            staff: true,
+            }
         },
         orderBy: { startAt: 'asc' },
     });
@@ -96,7 +131,20 @@ export const getTodaysAppointments = async (date: Date = getNow()): Promise<Appo
             duration: a.duration || 60,
             visitCount: visitCount,
             tags: a.patient.tags ? JSON.parse(a.patient.tags) : [],
-            memo: a.memo || a.patient.memo || '',
+            memo: (() => {
+                let mappedMemo = a.memo || '';
+                const pMemo = a.patient.memo || '';
+                if (pMemo.length > 0) {
+                    // Check for full match or trimmed match
+                    const isMatch = mappedMemo === pMemo || mappedMemo.trim() === pMemo.trim();
+                    // Also check if mappedMemo *starts with* pMemo if pMemo is long enough?
+                    // No, let's keep it safe.
+                    if (mappedMemo.length > 0 && isMatch) {
+                        mappedMemo = '';
+                    }
+                }
+                return mappedMemo;
+            })(),
             adminMemo: a.adminMemo || undefined,
             isMemoResolved: a.isMemoResolved ?? false,
             adminMemoResolvedBy: a.adminMemoResolvedBy || undefined,
@@ -126,13 +174,30 @@ export const findAllAppointments = async (options?: { includePast?: boolean; inc
 
     const appointments = await prisma.appointment.findMany({
         where,
-        include: {
+        select: {
+            id: true,
+            startAt: true,
+            duration: true,
+            status: true,
+            memo: true,
+            adminMemo: true,
+            isMemoResolved: true,
+            adminMemoResolvedBy: true,
+            adminMemoResolvedAt: true,
+            arrivedAt: true,
+            patientId: true,
+            staffId: true,
+            staff: true,
             patient: {
-                include: {
+                select: {
+                    id: true,
+                    name: true,
+                    kana: true,
+                    tags: true,
+                    memo: true,
                     _count: { select: { records: true } }
                 }
-            },
-            staff: true,
+            }
         },
         orderBy: { startAt: 'asc' },
     });
@@ -175,7 +240,20 @@ export const findAllAppointments = async (options?: { includePast?: boolean; inc
             duration: a.duration || 60,
             visitCount: visitCount,
             tags: a.patient.tags ? JSON.parse(a.patient.tags) : [],
-            memo: a.memo || a.patient.memo || '',
+            memo: (() => {
+                let mappedMemo = a.memo || '';
+                const pMemo = a.patient.memo || '';
+                if (pMemo.length > 0) {
+                    // Check for full match or trimmed match
+                    const isMatch = mappedMemo === pMemo || mappedMemo.trim() === pMemo.trim();
+                    // Also check if mappedMemo *starts with* pMemo if pMemo is long enough?
+                    // No, let's keep it safe.
+                    if (mappedMemo.length > 0 && isMatch) {
+                        mappedMemo = '';
+                    }
+                }
+                return mappedMemo;
+            })(),
             adminMemo: a.adminMemo || undefined,
             isMemoResolved: a.isMemoResolved ?? false,
             adminMemoResolvedBy: a.adminMemoResolvedBy || undefined,
@@ -201,18 +279,51 @@ export const getUnassignedFutureAppointments = async (): Promise<Appointment[]> 
             staffId: null,
             status: { not: 'cancelled' }
         },
-        include: {
+        select: {
+            id: true,
+            startAt: true,
+            duration: true,
+            status: true,
+            memo: true,
+            adminMemo: true,
+            isMemoResolved: true,
+            adminMemoResolvedBy: true,
+            adminMemoResolvedAt: true,
+            arrivedAt: true,
+            patientId: true,
+            staffId: true,
+            staff: true,
             patient: {
-                include: {
+                select: {
+                    id: true,
+                    name: true,
+                    kana: true,
+                    tags: true,
+                    memo: true,
                     _count: { select: { records: true } }
                 }
-            },
-            staff: true,
+            }
         },
         orderBy: { startAt: 'asc' },
     });
 
-    return appointments.map((a) => {
+    const result = appointments.map((a) => {
+        // [WORKAROUND] Prisma/DB seems to be populating a.memo with a.patient.memo even when DB has empty string/null.
+        // Explicitly check for this condition and clear it if it matches.
+        let mappedMemo = a.memo || '';
+
+        // If mappedMemo is exactly the same as patient.memo, and we logically expect it might be a ghost fallback, clear it.
+        // Also check with trim to be safe.
+        const pMemo = a.patient.memo || '';
+        if (pMemo.length > 0) {
+            const isMatch = mappedMemo === pMemo || mappedMemo.trim() === pMemo.trim();
+            // Conservative check: only if mappedMemo is NOT empty
+            if (mappedMemo.length > 0 && isMatch) {
+                console.log(`[SANITIZE] Clearing ghost memo for Appt ${a.id}. matches patient memo.`);
+                mappedMemo = '';
+            }
+        }
+
         return {
             id: a.id,
             patientId: a.patientId,
@@ -222,7 +333,7 @@ export const getUnassignedFutureAppointments = async (): Promise<Appointment[]> 
             duration: a.duration || 60,
             visitCount: (a.patient._count.records || 0) + 1,
             tags: a.patient.tags ? JSON.parse(a.patient.tags) : [],
-            memo: a.memo || a.patient.memo || '',
+            memo: mappedMemo,
             adminMemo: a.adminMemo || undefined,
             isMemoResolved: a.isMemoResolved ?? false,
             staffName: undefined,
@@ -231,6 +342,8 @@ export const getUnassignedFutureAppointments = async (): Promise<Appointment[]> 
             arrivedAt: a.arrivedAt || undefined,
         };
     });
+
+    return result;
 };
 
 export const getTodaysAppointmentForPatient = async (patientId: string) => {
@@ -351,6 +464,8 @@ export const createAppointment = async (patientId: string, startAt: Date, memo?:
         throw new Error('この患者は同じ時間帯に既に予約があります');
     }
 
+    console.log(`[DEBUG_CREATE] Creating appt. Memo arg: "${memo}"`);
+
     return await prisma.appointment.create({
         data: {
             patientId,
@@ -448,13 +563,30 @@ export const getUnresolvedAdminMemos = async (): Promise<Appointment[]> => {
                 }
             ]
         },
-        include: {
+        select: {
+            id: true,
+            startAt: true,
+            duration: true,
+            status: true,
+            memo: true,
+            adminMemo: true,
+            isMemoResolved: true,
+            adminMemoResolvedBy: true,
+            adminMemoResolvedAt: true,
+            arrivedAt: true,
+            patientId: true,
+            staffId: true,
+            staff: true,
             patient: {
-                include: {
+                select: {
+                    id: true,
+                    name: true,
+                    kana: true,
+                    tags: true,
+                    memo: true,
                     _count: { select: { records: true } }
                 }
-            },
-            staff: true,
+            }
         },
         orderBy: { startAt: 'desc' }
     });
