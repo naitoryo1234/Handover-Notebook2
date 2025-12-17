@@ -19,6 +19,10 @@ export type TimelineEntry = {
     status?: string; // for appointments
     flags?: string[]; // Added flags
     images?: string[]; // Attached image paths
+    // Appointment specific fields
+    adminMemo?: string; // 申し送り事項
+    staffName?: string; // 担当者
+    duration?: number; // 施術時間（分）
 };
 
 
@@ -306,6 +310,32 @@ export function TimelineItem({ entry, isLast, patientId, onDelete, onUpdate }: T
                                         />
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Appointment Details: 担当者・時間 */}
+                        {isAppointment && (entry.staffName || entry.duration) && (
+                            <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                                {entry.staffName && (
+                                    <span className="flex items-center gap-1">
+                                        <span className="font-medium">担当:</span> {entry.staffName}
+                                    </span>
+                                )}
+                                {entry.duration && (
+                                    <span className="flex items-center gap-1">
+                                        <span className="font-medium">時間:</span> {entry.duration}分
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Appointment AdminMemo (申し送り) */}
+                        {isAppointment && entry.adminMemo && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-100 rounded-lg">
+                                <p className="text-xs font-bold text-red-700 flex items-center gap-1 mb-0.5">
+                                    <AlertCircle className="w-3 h-3" /> 申し送り事項
+                                </p>
+                                <p className="text-xs text-red-600">{entry.adminMemo}</p>
                             </div>
                         )}
 

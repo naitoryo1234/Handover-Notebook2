@@ -365,10 +365,13 @@ export function ReservationNotebookClient({
                             {/* 担当者（デモなので固定またはSelect） */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-bold text-slate-700">担当者</label>
-                                <select className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-600">
-                                    <option>担当者 (未定)</option>
-                                    <option>高橋 院長</option>
-                                    <option>佐々木 スタッフ</option>
+                                <select
+                                    name="staffId"
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-600"
+                                >
+                                    <option value="">担当者 (未定)</option>
+                                    <option value="demo-staff-1">高橋 院長</option>
+                                    <option value="demo-staff-2">佐々木 スタッフ</option>
                                 </select>
                             </div>
 
@@ -394,6 +397,8 @@ export function ReservationNotebookClient({
                                     </label>
                                     <input
                                         type="text"
+                                        name="adminMemo"
+                                        defaultValue={editingAppointment?.adminMemo || ''}
                                         placeholder="スタッフ間での注意事項"
                                         className="w-full px-4 py-2 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-red-800 placeholder-red-300 bg-white"
                                     />
@@ -418,9 +423,10 @@ export function ReservationNotebookClient({
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
+                    </div >
+                </div >
+            )
+            }
 
             {/* 予約詳細 BottomSheet */}
             <BottomSheet
@@ -438,7 +444,7 @@ export function ReservationNotebookClient({
                                     {selectedAppointmentForDetail.patientName} <span className="text-sm font-normal text-slate-500">様</span>
                                 </div>
                                 <Link
-                                    href={`/patients/${selectedAppointmentForDetail.patientId}`}
+                                    href={`/customers/${selectedAppointmentForDetail.patientId}`}
                                     className="text-indigo-600 text-sm font-bold hover:underline flex items-center gap-1"
                                 >
                                     カルテを開く <User className="w-3 h-3" />

@@ -34,7 +34,7 @@ export function BottomSheet({ isOpen, onClose, children, title }: BottomSheetPro
     if (!isVisible && !isOpen) return null;
 
     return (
-        <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none`}>
+        <div className={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none`}>
             {/* Backdrop */}
             <div
                 className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto ${isOpen ? 'opacity-100' : 'opacity-0'
@@ -45,7 +45,7 @@ export function BottomSheet({ isOpen, onClose, children, title }: BottomSheetPro
             {/* Content */}
             <div
                 ref={contentRef}
-                className={`relative w-full max-w-lg bg-white shadow-2xl pointer-events-auto flex flex-col max-h-[90vh] transition-transform duration-300 ease-out sm:rounded-2xl rounded-t-2xl ${isOpen ? 'translate-y-0 sm:scale-100 opacity-100' : 'translate-y-full sm:scale-95 opacity-0'
+                className={`relative w-full max-w-lg bg-white shadow-2xl pointer-events-auto flex flex-col max-h-[80vh] sm:max-h-[90vh] sm:my-auto mb-0 mt-auto transition-transform duration-300 ease-out sm:rounded-2xl rounded-t-2xl ${isOpen ? 'translate-y-0 sm:scale-100 opacity-100' : 'translate-y-full sm:scale-95 opacity-0'
                     }`}
             >
                 {/* Drag Handle (Mobile only) */}

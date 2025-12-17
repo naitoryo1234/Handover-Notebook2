@@ -22,6 +22,7 @@ async function getTimeline(patientId: string): Promise<{ entries: TimelineEntry[
         prisma.appointment.findMany({
             where: { patientId },
             orderBy: { startAt: 'desc' },
+            include: { staff: true }
         }),
         prisma.clinicalRecord.findMany({
             where: { patientId },
@@ -37,7 +38,10 @@ async function getTimeline(patientId: string): Promise<{ entries: TimelineEntry[
             type: 'appointment' as const,
             content: `アポイントメント: ${getStatusText(a.status)}`,
             subContent: a.memo || undefined,
-            status: a.status
+            status: a.status,
+            adminMemo: a.adminMemo || undefined,
+            staffName: a.staff?.name || undefined,
+            duration: a.duration
         })),
         ...records.map(r => {
             // Check metadata for 'memo' type
