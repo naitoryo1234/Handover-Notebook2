@@ -1,7 +1,8 @@
 import { getPatients, getPatientById } from '@/services/patientService';
 import Link from 'next/link';
-import { ArrowLeft, Search, Users, ArrowUpRight } from 'lucide-react';
+import { Users, FileText } from 'lucide-react';
 import { CustomerNotebookClient } from './CustomerNotebookClient';
+import { CustomerNotebookSearch } from './CustomerNotebookSearch';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,17 +28,7 @@ export default async function CustomerNotebookPage({ searchParams }: PageProps) 
                 {/* モバイル: 顧客選択時は非表示 (PCは常に表示) */}
                 <div className={`lg:col-span-1 space-y-4 ${selectedId ? 'hidden lg:block' : 'block'}`}>
                     {/* 検索 */}
-                    <form className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            name="q"
-                            defaultValue={query}
-                            placeholder="顧客を検索..."
-                            className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
-                        />
-                        {selectedId && <input type="hidden" name="id" value={selectedId} />}
-                    </form>
+                    <CustomerNotebookSearch />
 
                     {/* 顧客一覧 */}
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -51,29 +42,29 @@ export default async function CustomerNotebookPage({ searchParams }: PageProps) 
                                 patients.map((patient) => (
                                     <div
                                         key={patient.id}
-                                        className={`group flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors ${selectedId === patient.id ? 'bg-indigo-50/60 border-l-2 border-indigo-500' : 'border-l-2 border-transparent'
+                                        className={`group flex items-center justify-between pl-4 pr-2 py-2 hover:bg-slate-50 transition-colors ${selectedId === patient.id ? 'bg-indigo-50/60 border-l-2 border-indigo-500' : 'border-l-2 border-transparent'
                                             }`}
                                     >
                                         <Link
-                                            href={`/customer-notebook?id=${patient.id}${query ? `&q=${query}` : ''}`}
-                                            className="flex-1 min-w-0"
+                                            href={`/customers/${patient.id}`}
+                                            className="flex-1 min-w-0 py-1"
                                         >
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className={`font-medium ${selectedId === patient.id ? 'text-indigo-900' : 'text-slate-800'}`}>
-                                                        {patient.name}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500">{patient.kana}</p>
-                                                </div>
+                                            <div>
+                                                <p className={`font-medium ${selectedId === patient.id ? 'text-indigo-900' : 'text-slate-800'}`}>
+                                                    {patient.name}
+                                                </p>
+                                                <p className="text-xs text-slate-500">{patient.kana}</p>
                                             </div>
                                         </Link>
 
                                         <Link
-                                            href={`/customers/${patient.id}`}
-                                            className="ml-2 p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                            title="詳細ページを開く"
+                                            href={`/customer-notebook?id=${patient.id}${query ? `&q=${query}` : ''}`}
+                                            className={`p-2 rounded-lg transition-colors ${selectedId === patient.id
+                                                ? 'bg-indigo-100 text-indigo-600'
+                                                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                                            title="ノートを開く"
                                         >
-                                            <ArrowUpRight className="w-4 h-4" />
+                                            <FileText className="w-5 h-5" />
                                         </Link>
                                     </div>
                                 ))
@@ -103,7 +94,7 @@ export default async function CustomerNotebookPage({ searchParams }: PageProps) 
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
