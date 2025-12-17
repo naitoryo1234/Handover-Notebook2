@@ -1037,12 +1037,12 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-center gap-3 border-t border-slate-50 pt-3">
+                            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-t border-slate-50 pt-3 pb-16 sm:pb-3">
                                 {/* Left: AI Format Button */}
                                 <button
                                     onClick={handleAIFormat}
                                     disabled={!newMemoContent.trim() || isFormatting}
-                                    className="px-3 py-2 text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 disabled:text-slate-300 disabled:hover:bg-transparent rounded-md transition-colors flex items-center gap-1.5 font-medium"
+                                    className="px-3 py-2 text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 disabled:text-slate-300 disabled:hover:bg-transparent rounded-md transition-colors flex items-center justify-center gap-1.5 font-medium"
                                 >
                                     {isFormatting ? (
                                         <>
@@ -1058,7 +1058,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                                 </button>
 
                                 {/* Right: Cancel & Save Buttons */}
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 w-full sm:w-auto">
                                     <button
                                         onClick={() => {
                                             setIsAddingMemo(false);
@@ -1068,14 +1068,14 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                                             setShowFormattedResult(false);
                                             setFormattedResult(null);
                                         }}
-                                        className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors"
+                                        className="flex-1 sm:flex-none px-4 py-2 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors"
                                     >
                                         キャンセル
                                     </button>
                                     <button
                                         onClick={handleAddMemo}
                                         disabled={!newMemoContent.trim() || isSavingMemo}
-                                        className="px-4 py-2 text-sm bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-medium rounded-md shadow-sm transition-colors flex items-center gap-1.5"
+                                        className="flex-1 sm:flex-none px-4 py-2 text-sm bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-medium rounded-md shadow-sm transition-colors flex items-center justify-center gap-1.5"
                                     >
                                         {isSavingMemo ? '保存中...' : '追加する'}
                                     </button>
@@ -1273,8 +1273,8 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                 </div>
             </div>
 
-            {/* Mobile Voice Input FAB */}
-            <MobileVoiceInput onCommit={handleMobileVoiceCommit} isProcessing={isFormatting} />
+            {/* Mobile Voice Input FAB - Hidden when memo form is open */}
+            {!isAddingMemo && <MobileVoiceInput onCommit={handleMobileVoiceCommit} isProcessing={isFormatting} />}
         </div>
     );
 }
