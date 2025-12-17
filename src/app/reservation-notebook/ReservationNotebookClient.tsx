@@ -286,8 +286,8 @@ export function ReservationNotebookClient({
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl w-full max-w-lg md:max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur z-10 shrink-0">
-                            <h3 className="text-xl font-bold text-slate-800">
+                        <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur z-10 shrink-0">
+                            <h3 className="text-lg font-bold text-slate-800">
                                 {editingAppointment ? '予約を編集' : '新規予約を作成'}
                             </h3>
                             <button
@@ -295,18 +295,18 @@ export function ReservationNotebookClient({
                                     setIsModalOpen(false);
                                     setEditingAppointment(null);
                                 }}
-                                className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"
+                                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
                             >
-                                <X className="w-6 h-6" />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 h-full">
                                 {/* 左カラム: 顧客・日時 */}
-                                <div className="space-y-8">
+                                <div className="space-y-6">
                                     {/* 顧客選択 */}
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                         <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
                                             <User className="w-4 h-4" /> お客様
                                         </label>
@@ -318,18 +318,18 @@ export function ReservationNotebookClient({
                                     </div>
 
                                     {/* 日時設定 */}
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                         <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
                                             <Clock className="w-4 h-4" /> 日時・時間
                                         </label>
-                                        <div className="grid grid-cols-[1.5fr,1fr,1fr] gap-3">
+                                        <div className="grid grid-cols-[1.5fr,1fr,1fr] gap-2">
                                             <input
                                                 type="date"
                                                 name="visitDate"
                                                 required
                                                 value={formDate}
                                                 onChange={(e) => setFormDate(e.target.value)}
-                                                className="w-full px-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm"
+                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm"
                                             />
                                             <input
                                                 type="time"
@@ -337,12 +337,12 @@ export function ReservationNotebookClient({
                                                 required
                                                 value={formTime}
                                                 onChange={(e) => setFormTime(e.target.value)}
-                                                className="w-full px-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm"
+                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm"
                                             />
                                             <select
                                                 name="duration"
                                                 defaultValue={editingAppointment?.duration || 60}
-                                                className="w-full px-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm bg-white"
+                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 text-sm bg-white"
                                             >
                                                 <option value="30">30分</option>
                                                 <option value="60">60分</option>
@@ -353,24 +353,23 @@ export function ReservationNotebookClient({
                                         {/* クイックボタン */}
                                         <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-hide">
                                             <div className="flex gap-2 flex-shrink-0">
-                                                <button type="button" onClick={() => setQuickDate('today')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">今日</button>
-                                                <button type="button" onClick={() => setQuickDate('tomorrow')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">明日</button>
-                                                <button type="button" onClick={() => setQuickDate('nextWeek')} className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">来週</button>
+                                                <button type="button" onClick={() => setQuickDate('today')} className="px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-md border border-slate-200 transition-colors">今日</button>
+                                                <button type="button" onClick={() => setQuickDate('tomorrow')} className="px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-md border border-slate-200 transition-colors">明日</button>
+                                                <button type="button" onClick={() => setQuickDate('nextWeek')} className="px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-md border border-slate-200 transition-colors">来週</button>
                                             </div>
                                             <div className="flex gap-2 flex-shrink-0">
-                                                <button type="button" onClick={() => addTime(15)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+15分</button>
-                                                <button type="button" onClick={() => addTime(30)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+30分</button>
-                                                <button type="button" onClick={() => addTime(60)} className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-lg border border-indigo-100 transition-colors">+60分</button>
+                                                <button type="button" onClick={() => addTime(15)} className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-md border border-indigo-100 transition-colors">+15分</button>
+                                                <button type="button" onClick={() => addTime(30)} className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-md border border-indigo-100 transition-colors">+30分</button>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* 担当者 */}
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                         <label className="block text-sm font-bold text-slate-700">担当者</label>
                                         <select
                                             name="staffId"
-                                            className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-600"
+                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-600 text-sm"
                                         >
                                             <option value="">担当者 (未定)</option>
                                             <option value="demo-staff-1">高橋 院長</option>
@@ -379,45 +378,62 @@ export function ReservationNotebookClient({
                                     </div>
                                 </div>
 
-                                {/* 右カラム: メモ・申し送り */}
-                                <div className="space-y-8">
+                                {/* 右カラム: メモ・申し送り・アクションボタン */}
+                                <div className="space-y-6 flex flex-col h-full">
                                     {/* 受付メモ */}
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-1">
                                             受付メモ
                                         </label>
-                                        <p className="text-xs text-slate-400 mb-2">※1-2行程度の簡単な内容</p>
+                                        <p className="text-[10px] text-slate-400 mb-1">※1-2行程度の簡単な内容</p>
                                         <textarea
                                             name="memo"
-                                            rows={3}
+                                            rows={2}
                                             defaultValue={editingAppointment?.memo || ''}
-                                            className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-sm"
                                             placeholder="患者様からの要望など"
                                         />
                                     </div>
 
                                     {/* 申し送り事項 */}
-                                    <div className="bg-red-50 border border-red-100 rounded-xl p-4 h-fit">
-                                        <label className="flex items-center gap-2 text-sm font-bold text-red-700 mb-2">
+                                    <div className="bg-red-50/50 border border-red-100 rounded-xl p-3 h-fit flex-grow">
+                                        <label className="flex items-center gap-2 text-sm font-bold text-red-700 mb-1">
                                             <AlertTriangle className="w-4 h-4" /> 申し送り事項
                                         </label>
-                                        <p className="text-xs text-red-400 mb-3">
-                                            スタッフ間で共有すべき注意事項を入力してください。<br />
-                                            (タイムラインにて強調表示されます)
+                                        <p className="text-[10px] text-red-400 mb-2 leading-tight">
+                                            スタッフ共有事項を入力 (タイムライン強調表示)
                                         </p>
                                         <textarea
                                             name="adminMemo"
-                                            rows={3}
+                                            rows={2}
                                             defaultValue={editingAppointment?.adminMemo || ''}
                                             placeholder="例: 前回施術後に赤みが出たため注意"
-                                            className="w-full px-4 py-3 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-red-800 placeholder-red-300 bg-white resize-none"
+                                            className="w-full px-3 py-2 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-red-800 placeholder-red-300 bg-white resize-none text-sm"
                                         />
+                                    </div>
+
+                                    {/* PC用アクションボタン（右カラム下部） */}
+                                    <div className="hidden md:flex items-center justify-end gap-3 mt-auto pt-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsModalOpen(false)}
+                                            className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition-colors text-sm"
+                                        >
+                                            キャンセル
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-md shadow-indigo-100 text-sm"
+                                        >
+                                            {isSubmitting ? '処理中...' : editingAppointment ? '変更を保存' : '予約を確定'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 送信ボタン（下部に固定） */}
-                            <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                            {/* モバイル用アクションボタン（下部固定） */}
+                            <div className="md:hidden mt-8 pt-4 border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white/95 backdrop-blur -mx-6 px-6 -mb-6 pb-6 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
