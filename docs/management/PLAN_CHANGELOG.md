@@ -320,3 +320,64 @@ GEMINI_API_KEY=your_api_key_here
 3. **Empty State / Loading改善**: 一貫したUI/UX、0.25日
 4. **Reservation Notebook刷新**: Customer Notebookと同等のSaaS品質へ引き上げ
 5. **AI機能拡張**: 過去履歴からの自動サジェスト
+
+
+## v1.8.0 (2025-12-17)
+
+### 変更内容
+- **Customer Notebook 完成度 95%達成**
+  - Customer Notebook単体としての機能が概ね完成
+  - モジュール設計: 顧客管理のみ利用したいユーザーに対応
+
+- **モバイルUI/UXコンポーネント拡充**
+  - `EmptyState.tsx`: テーマカラー対応 (slate/indigo/teal/amber) の空状態コンポーネント
+  - `EmptyStateSearch`, `EmptyStateList`, `EmptyStateError`, `EmptyStateCustomers`, `EmptyStateReservations` プリセット
+  - `Skeleton.tsx` 拡張: `SkeletonText`, `SkeletonCard`, `SkeletonList`, `SkeletonCustomerListItem`, `SkeletonTimelineItem`
+  - `CustomerSummaryCard.tsx`: 予約詳細等から呼び出すコンパクト顧客情報カード
+  - `QuickEditModal.tsx`: モバイル向け簡易顧客編集モーダル
+  - `quickUpdatePatient` Server Action: 名前・カナ・電話のみ更新
+
+- **Customer Notebook インクリメンタルサーチ**
+  - `CustomerNotebookSearch.tsx`: 入力中に自動検索、デバウンス処理 (300ms)
+  - URLパラメータ同期でブラウザバック対応
+
+- **顧客リストUIの改善**
+  - デュアルアクション: 左タップで詳細ページ、右アイコンでノート表示
+  - EmptyState適用: 検索結果なし時にindigoテーマ表示
+
+- **Reservation Notebook EmptyState適用**
+  - 予約なし時にtealテーマのEmptyStateReservationsを表示
+  - アクションボタン「新規予約を作成」付き
+
+- **Prisma接続問題の解決**
+  - `.env` と `.env.local` の `DATABASE_URL` 同期問題を修正
+  - Neon PostgreSQLへの接続が正常に動作することを確認
+
+### 変更の背景
+- 鍼灸院からのフィードバック: 保険申請システムが別にあるため、顧客管理のみ/予約管理のみ使いたいニーズがある
+- この方針に基づき、Customer Notebook と Reservation Notebook をそれぞれ単体で完成させるモジュール設計を採用
+- Customer Notebook を先に完成させ、次フェーズで Reservation Notebook の刷新に着手
+
+---
+
+## 次回予定 (Priority Order)
+
+1. **Reservation Notebook P0タスク**
+   - チェックイン/完了ボタン (ステータス更新UI)
+   - UndoToast コンポーネント
+   - BottomSheet コンポーネント (予約詳細表示)
+
+2. **Reservation Notebook 品質向上**
+   - Customer Notebook と同等のSaaS品質へ引き上げ
+   - モバイル最適化
+
+3. **統合・連携機能**
+   - 予約カード → 顧客詳細へのクイックナビ
+   - 顧客詳細 → 予約追加ボタン
+   - CustomerSummaryCard の BottomSheet 統合
+
+4. **後回し (P2)**
+   - 最近の顧客リスト
+   - 二重予約警告UI
+   - QuickEditModal の CustomerDetailClient 統合
+
