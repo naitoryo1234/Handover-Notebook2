@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./local.db"
+}
+
+// --------------------------------------------------------
+// Patient: 患者マスタ
+// --------------------------------------------------------
+model Patient {
+  id          String    @id @default(uuid())
+  pId         Int       @unique // 診察券番号 (App managed auto-inc)
+  name        String
+  kana        String    // 検索・名寄せ用
+  birthDate   DateTime?
+  phone       String?
+  gender      String?
+  address     String?
+  memo        String?   // ラポールメモ
+  
+  // JSON Fields for Flexibility & AI
+  tags        String    @default("[]") // JSON string: string[]
+  attributes  String    @default("{}") // JSON string: Record<string, any>
+  externalRef String    @default("{}") // JSON string: Record<string, string>
+  importMeta  String    @default("{}") // JSON string: Record<string, any>
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // Logical delete for safety
+
+  records     ClinicalRecord[]
+  appointments Appointment[]
+  attachments Attachment[]
+
+  @@index([kana])
+  @@index([phone])
+}
+
+// --------------------------------------------------------
+// ClinicalRecord: 施術記録 (SOAP)
+// --------------------------------------------------------
+model ClinicalRecord {
+  id          String   @id @default(uuid())
+  
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  patientId   String
+
+  visitDate   DateTime @default(now())
+  
+  // visitCount is application managed or computed, kept for now but consider removal in v1.1
+  visitCount  Int      @default(1)
+
+  // SOAP Fields
+  subjective  String   @default("") // S: 主訴
+  objective   String   @default("") // O: 所見
+  assessment  String   @default("") // A: 施術
+  plan        String   @default("") // P: 計画
+  
+  rawText     String?  @default("") // OCR/Import raw text
+  
+  // Meta
+  tags        String   @default("[]") // JSON string
+  metadata    String   @default("{}") // JSON string for AI analysis
+
+  // Staff (Required for Audit)
+  staff       Staff    @relation(fields: [staffId], references: [id])
+  staffId     String
+
+  // Audit Fields (Operator Tracking)
+  createdBy   String?  // staffId of the original creator
+  updatedBy   String?  // staffId of the last editor
+  revision    Int      @default(1)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attachments Attachment[]
+
+  @@index([patientId, visitDate])
+  @@index([visitDate])
+}
+
+// --------------------------------------------------------
+// Attachment: 添付ファイル (Future)
+// --------------------------------------------------------
+model Attachment {
+  id          String   @id @default(uuid())
+  
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  patientId   String
+  
+  record      ClinicalRecord? @relation(fields: [recordId], references: [id])
+  recordId    String?
+
+  fileType    String   // MIME type
+  storageKey  String   // Relative path for storage (e.g. "2024/01/uuid.jpg")
+  
+  ocrText     String?  @default("") // Future AI/OCR Content
+  
+  createdAt   DateTime @default(now())
+}
+
+model Appointment {
+  id          String   @id @default(uuid())
+  
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  patientId   String
+  
+  startAt     DateTime // 予約日時
+  duration    Int      @default(30) // 分単位
+  
+  status      String   @default("scheduled") // scheduled, arrived, completed, cancelled
+  arrivedAt   DateTime? // Check-in time
+  memo        String?  // 予約メモ (電話受付など)
+  adminMemo   String?  // 管理者メモ (申し送り事項・注意点)
+  isMemoResolved Boolean @default(false) // 申し送り確認済みフラグ
+  
+  staff       Staff?   @relation(fields: [staffId], references: [id])
+  staffId     String?
+
+  // Audit Fields (Operator Tracking)
+  createdBy           String?   // staffId of the original creator
+  updatedBy           String?   // staffId of the last editor
+  adminMemoResolvedBy String?   // staffId of who resolved the admin memo
+  adminMemoResolvedAt DateTime? // When the admin memo was resolved
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([startAt, status])
+  @@index([patientId, startAt])
+}
+
+// --------------------------------------------------------
+// Staff: スタッフマスタ
+// --------------------------------------------------------
+model Staff {
+  id        String   @id @default(uuid())
+  name      String
+  role      String   @default("Director") // Director, Therapist, Clerk, Other
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  records      ClinicalRecord[]
+  appointments Appointment[]
+}
+
+// --------------------------------------------------------
+// System Settings: システム設定 (Key-Value Store)
+// --------------------------------------------------------
+model SystemSetting {
+  key         String   @id
+  value       String   // JSON string
+  description String?
+  updatedAt   DateTime @updatedAt
+}

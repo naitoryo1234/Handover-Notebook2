@@ -1,0 +1,19 @@
+appId: com.clinic-crm.lite
+productName: Customer Notebook
+directories:
+  output: dist
+  buildResources: build
+asar: false
+files:
+  - from: .
+    filter:
+      - package.json
+      - main/**/*
+      - .next/standalone/**/*
+      - .next/static/**/*
+      - public/**/*
+      - prisma/**/*
+      - "*.db"
+win:
+  target: dir
+  icon: build/icon.png
