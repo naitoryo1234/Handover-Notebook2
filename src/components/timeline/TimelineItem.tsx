@@ -344,7 +344,7 @@ export function TimelineItem({ entry, isLast, patientId, onDelete, onUpdate }: T
                             <div className="mt-2 text-xs">
                                 {isAppointment ? (
                                     <span className="text-slate-600">
-                                        <span className="font-bold text-slate-500 mr-1">予約メモ:</span>
+                                        <span className="font-bold text-slate-500 mr-1">受付メモ:</span>
                                         {entry.subContent}
                                     </span>
                                 ) : (

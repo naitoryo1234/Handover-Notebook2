@@ -378,9 +378,10 @@ export function ReservationNotebookClient({
                             {/* 受付メモ・申し送り */}
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">
                                         受付メモ
                                     </label>
+                                    <p className="text-xs text-slate-400 mb-2">※1-2行程度の簡単な内容</p>
                                     <textarea
                                         name="memo"
                                         rows={2}
