@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Custom ignores:
+    "main/**",           // Electron main process (CommonJS)
+    "starters/**",       // Starter templates
+    "scripts/**",        // Build scripts
+    "history/**",        // Old history files
+    "gem_planning/**",   // Planning docs
+    "srccomponentsappointment/**", // Orphan folder
+    "src/types/speech.d.ts", // Web Speech API type definitions
   ]),
 ]);
 

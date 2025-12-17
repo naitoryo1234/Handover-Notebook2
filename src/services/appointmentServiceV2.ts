@@ -12,7 +12,7 @@ export interface Appointment {
     duration: number; // minutes
     visitCount: number;
     tags: string[];
-    memo?: string; // patient memo
+    memo?: string; // appointment memo (予約メモ)
     adminMemo?: string; // admin/handover memo
     isMemoResolved?: boolean;
     adminMemoResolvedBy?: string; // staffId of resolver
@@ -132,18 +132,13 @@ export const getTodaysAppointments = async (date: Date = getNow()): Promise<Appo
             visitCount: visitCount,
             tags: a.patient.tags ? JSON.parse(a.patient.tags) : [],
             memo: (() => {
-                let mappedMemo = a.memo || '';
-                const pMemo = a.patient.memo || '';
-                if (pMemo.length > 0) {
-                    // Check for full match or trimmed match
-                    const isMatch = mappedMemo === pMemo || mappedMemo.trim() === pMemo.trim();
-                    // Also check if mappedMemo *starts with* pMemo if pMemo is long enough?
-                    // No, let's keep it safe.
-                    if (mappedMemo.length > 0 && isMatch) {
-                        mappedMemo = '';
-                    }
+                const apptMemo = a.memo || '';
+                const patientMemo = a.patient.memo || '';
+                // [MONITOR] ワークアラウンド削除後の監視: memo一致検出時にログ出力
+                if (apptMemo && patientMemo && apptMemo === patientMemo) {
+                    console.warn(`[MEMO_MONITOR] Appointment ${a.id}: memo matches patient.memo. Investigate if unexpected.`);
                 }
-                return mappedMemo;
+                return apptMemo;
             })(),
             adminMemo: a.adminMemo || undefined,
             isMemoResolved: a.isMemoResolved ?? false,
@@ -241,18 +236,13 @@ export const findAllAppointments = async (options?: { includePast?: boolean; inc
             visitCount: visitCount,
             tags: a.patient.tags ? JSON.parse(a.patient.tags) : [],
             memo: (() => {
-                let mappedMemo = a.memo || '';
-                const pMemo = a.patient.memo || '';
-                if (pMemo.length > 0) {
-                    // Check for full match or trimmed match
-                    const isMatch = mappedMemo === pMemo || mappedMemo.trim() === pMemo.trim();
-                    // Also check if mappedMemo *starts with* pMemo if pMemo is long enough?
-                    // No, let's keep it safe.
-                    if (mappedMemo.length > 0 && isMatch) {
-                        mappedMemo = '';
-                    }
+                const apptMemo = a.memo || '';
+                const patientMemo = a.patient.memo || '';
+                // [MONITOR] ワークアラウンド削除後の監視: memo一致検出時にログ出力
+                if (apptMemo && patientMemo && apptMemo === patientMemo) {
+                    console.warn(`[MEMO_MONITOR] Appointment ${a.id}: memo matches patient.memo. Investigate if unexpected.`);
                 }
-                return mappedMemo;
+                return apptMemo;
             })(),
             adminMemo: a.adminMemo || undefined,
             isMemoResolved: a.isMemoResolved ?? false,
@@ -308,20 +298,12 @@ export const getUnassignedFutureAppointments = async (): Promise<Appointment[]> 
     });
 
     const result = appointments.map((a) => {
-        // [WORKAROUND] Prisma/DB seems to be populating a.memo with a.patient.memo even when DB has empty string/null.
-        // Explicitly check for this condition and clear it if it matches.
-        let mappedMemo = a.memo || '';
+        const apptMemo = a.memo || '';
+        const patientMemo = a.patient.memo || '';
 
-        // If mappedMemo is exactly the same as patient.memo, and we logically expect it might be a ghost fallback, clear it.
-        // Also check with trim to be safe.
-        const pMemo = a.patient.memo || '';
-        if (pMemo.length > 0) {
-            const isMatch = mappedMemo === pMemo || mappedMemo.trim() === pMemo.trim();
-            // Conservative check: only if mappedMemo is NOT empty
-            if (mappedMemo.length > 0 && isMatch) {
-                console.log(`[SANITIZE] Clearing ghost memo for Appt ${a.id}. matches patient memo.`);
-                mappedMemo = '';
-            }
+        // [MONITOR] ワークアラウンド削除後の監視: memo一致検出時にログ出力
+        if (apptMemo && patientMemo && apptMemo === patientMemo) {
+            console.warn(`[MEMO_MONITOR] Appointment ${a.id}: memo matches patient.memo. Investigate if unexpected.`);
         }
 
         return {
@@ -333,7 +315,7 @@ export const getUnassignedFutureAppointments = async (): Promise<Appointment[]> 
             duration: a.duration || 60,
             visitCount: (a.patient._count.records || 0) + 1,
             tags: a.patient.tags ? JSON.parse(a.patient.tags) : [],
-            memo: mappedMemo,
+            memo: apptMemo,
             adminMemo: a.adminMemo || undefined,
             isMemoResolved: a.isMemoResolved ?? false,
             staffName: undefined,

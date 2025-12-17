@@ -127,7 +127,7 @@ export async function updateAppointmentAction(formData: FormData) {
 export async function checkInAppointmentAction(appointmentId: string) {
     if (!appointmentId) return { success: false, message: 'IDが不足しています' };
     try {
-        await import('@/services/appointmentService').then(s => s.checkInAppointment(appointmentId));
+        await import('@/services/appointmentServiceV2').then(s => s.checkInAppointment(appointmentId));
         revalidatePath('/');
         revalidatePath('/reservation-notebook');
         return { success: true };
@@ -141,7 +141,7 @@ export async function checkInAppointmentAction(appointmentId: string) {
 export async function cancelCheckInAction(appointmentId: string) {
     if (!appointmentId) return { success: false, message: 'IDが不足しています' };
     try {
-        await import('@/services/appointmentService').then(s => s.cancelCheckIn(appointmentId));
+        await import('@/services/appointmentServiceV2').then(s => s.cancelCheckIn(appointmentId));
         revalidatePath('/');
         revalidatePath('/reservation-notebook');
         return { success: true };
@@ -175,7 +175,7 @@ export async function toggleAdminMemoResolutionAction(
             updateData.adminMemoResolvedBy = null;
         }
 
-        await import('@/services/appointmentService').then(s => s.updateAppointment(appointmentId, updateData));
+        await import('@/services/appointmentServiceV2').then(s => s.updateAppointment(appointmentId, updateData));
         revalidatePath('/');
         revalidatePath('/appointments');
         revalidatePath('/reservation-notebook');
@@ -190,7 +190,7 @@ export async function toggleAdminMemoResolutionAction(
 export async function completeAppointmentAction(appointmentId: string) {
     if (!appointmentId) return { success: false, message: 'IDが不足しています' };
     try {
-        await import('@/services/appointmentService').then(s => s.updateAppointment(appointmentId, { status: 'completed' }));
+        await import('@/services/appointmentServiceV2').then(s => s.updateAppointment(appointmentId, { status: 'completed' }));
         revalidatePath('/');
         revalidatePath('/reservation-notebook');
         return { success: true };
@@ -204,7 +204,7 @@ export async function completeAppointmentAction(appointmentId: string) {
 export async function undoAppointmentStatusAction(appointmentId: string, previousStatus: string) {
     if (!appointmentId || !previousStatus) return { success: false, message: 'パラメータが不足しています' };
     try {
-        await import('@/services/appointmentService').then(s => s.updateAppointment(appointmentId, { status: previousStatus }));
+        await import('@/services/appointmentServiceV2').then(s => s.updateAppointment(appointmentId, { status: previousStatus }));
         revalidatePath('/');
         revalidatePath('/reservation-notebook');
         return { success: true };
