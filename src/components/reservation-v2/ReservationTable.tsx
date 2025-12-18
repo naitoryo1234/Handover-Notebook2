@@ -189,61 +189,64 @@ export function ReservationTable({ appointments, onEdit, onDelete, onCheckIn, on
                                                 </button>
                                             </>
                                         ) : appointment.status === 'completed' ? (
-                                            // 完了済み: 操作ボタンをグレーアウト
+                                            // 完了済み: 記録のみ表示
                                             <>
-                                                <span className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-500 text-sm font-bold rounded-lg">
+                                                <span
+                                                    className="p-2 bg-slate-100 text-slate-400 rounded-lg"
+                                                    title="完了済み"
+                                                >
                                                     <CheckCircle2 className="w-4 h-4" />
-                                                    完了
                                                 </span>
                                                 <Link
                                                     href={`/customers/${appointment.patientId}`}
-                                                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-600 hover:bg-slate-300 text-sm font-bold rounded-lg transition-colors"
+                                                    className="p-2 bg-slate-200 text-slate-600 hover:bg-slate-300 rounded-lg transition-colors"
+                                                    title="記録を見る"
                                                 >
                                                     <FileText className="w-4 h-4" />
-                                                    記録
                                                 </Link>
                                             </>
                                         ) : (
                                             <>
-                                                {/* ステータス遷移ボタン */}
+                                                {/* ステータス遷移ボタン（アイコンのみ） */}
                                                 {appointment.status === 'scheduled' && onCheckIn && (
                                                     <button
                                                         onClick={() => onCheckIn(appointment.id)}
-                                                        className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                                                        className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors shadow-sm"
+                                                        title="チェックイン（来店確認）"
                                                     >
                                                         <LogIn className="w-4 h-4" />
-                                                        チェックイン
                                                     </button>
                                                 )}
                                                 {appointment.status === 'arrived' && onComplete && (
                                                     <button
                                                         onClick={() => onComplete(appointment.id)}
-                                                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                                                        className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors shadow-sm"
+                                                        title="完了"
                                                     >
                                                         <CheckCircle2 className="w-4 h-4" />
-                                                        完了
                                                     </button>
                                                 )}
                                                 <Link
                                                     href={`/customers/${appointment.patientId}`}
-                                                    className={`flex items-center gap-1 px-3 py-1.5 text-sm font-bold rounded-lg transition-colors ${isDimmed
+                                                    className={`p-2 rounded-lg transition-colors ${isDimmed
                                                         ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                                                         : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                                                         }`}
+                                                    title="記録"
                                                 >
                                                     <FileText className="w-4 h-4" />
-                                                    記録
                                                 </Link>
                                                 <button
                                                     onClick={() => onEdit(appointment.id)}
-                                                    className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg border border-slate-200 transition-colors"
+                                                    className="p-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-200 transition-colors"
+                                                    title="編集"
                                                 >
                                                     <Edit3 className="w-4 h-4" />
-                                                    編集
                                                 </button>
                                                 <button
                                                     onClick={() => onDelete(appointment.id)}
-                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="削除"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>

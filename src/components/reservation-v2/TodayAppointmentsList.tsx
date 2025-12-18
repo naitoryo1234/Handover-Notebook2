@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format, parseISO, differenceInMinutes, isAfter, isBefore, addMinutes } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { RefreshCw, User, Clock, Hash, AlertCircle, FileText } from 'lucide-react';
+import { RefreshCw, User, Clock, Hash, AlertCircle, FileText, LogIn, CheckCircle2 } from 'lucide-react';
 import { Appointment } from '@/services/appointmentServiceV2';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,8 @@ interface TodayAppointmentsListProps {
     appointments: Appointment[];
     currentTime?: Date;
     onPatientSelect?: (patientName: string) => void;
+    onCheckIn?: (id: string) => void;
+    onComplete?: (id: string) => void;
 }
 
 type DialogState = {
@@ -23,7 +25,9 @@ type DialogState = {
 export function TodayAppointmentsList({
     appointments,
     currentTime = new Date(),
-    onPatientSelect
+    onPatientSelect,
+    onCheckIn,
+    onComplete
 }: TodayAppointmentsListProps) {
     // 申し送り・メモダイアログ用
     const [dialogState, setDialogState] = useState<DialogState>(null);
@@ -165,8 +169,36 @@ export function TodayAppointmentsList({
                                         <div className="font-bold text-slate-700 text-lg font-mono tracking-tight leading-none">
                                             {timeRange}
                                         </div>
-                                        <div className="scale-90 origin-right">
-                                            {getStatusBadge(apt)}
+                                        <div className="flex items-center gap-1.5">
+                                            {/* ステータスバッジ */}
+                                            <div className="scale-90 origin-right">
+                                                {getStatusBadge(apt)}
+                                            </div>
+                                            {/* アクションボタン */}
+                                            {apt.status === 'scheduled' && onCheckIn && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onCheckIn(apt.id);
+                                                    }}
+                                                    className="p-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md transition-colors shadow-sm"
+                                                    title="チェックイン"
+                                                >
+                                                    <LogIn className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                            {apt.status === 'arrived' && onComplete && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onComplete(apt.id);
+                                                    }}
+                                                    className="p-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors shadow-sm"
+                                                    title="完了"
+                                                >
+                                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 

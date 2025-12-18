@@ -212,6 +212,22 @@ export function ReservationV2Client({
                             <TodayAppointmentsList
                                 appointments={todayAppointments}
                                 onPatientSelect={handlePatientSelect}
+                                onCheckIn={async (id) => {
+                                    const result = await checkInAppointmentAction(id);
+                                    if (result.success) {
+                                        toast.success('チェックイン完了', { description: 'お客様の来店を確認しました' });
+                                    } else {
+                                        toast.error('エラー', { description: result.message || 'チェックインに失敗しました' });
+                                    }
+                                }}
+                                onComplete={async (id) => {
+                                    const result = await completeAppointmentAction(id);
+                                    if (result.success) {
+                                        toast.success('施術完了', { description: '予約が完了になりました' });
+                                    } else {
+                                        toast.error('エラー', { description: result.message || '完了処理に失敗しました' });
+                                    }
+                                }}
                             />
                         }
                     />
