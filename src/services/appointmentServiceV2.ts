@@ -1,7 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { startOfDay, endOfDay } from 'date-fns';
-import { getNow } from '@/lib/dateUtils';
+import { getNow, startOfDayJST, endOfDayJST } from '@/lib/dateUtils';
 
 export interface Appointment {
     id: string; // record id
@@ -62,8 +61,8 @@ type AppointmentWithRel = Prisma.AppointmentGetPayload<{
 }>;
 
 export const getTodaysAppointments = async (date: Date = getNow()): Promise<Appointment[]> => {
-    const start = startOfDay(date);
-    const end = endOfDay(date);
+    const start = startOfDayJST(date);
+    const end = endOfDayJST(date);
 
     const appointments = await prisma.appointment.findMany({
         where: {
@@ -160,7 +159,7 @@ export const findAllAppointments = async (options?: { includePast?: boolean; inc
     const where: { startAt?: { gte: Date }; status?: { not: string } } = {};
 
     if (!options?.includePast) {
-        where.startAt = { gte: startOfDay(now) };
+        where.startAt = { gte: startOfDayJST(now) };
     }
 
     if (!options?.includeCancelled) {
@@ -331,8 +330,8 @@ export const getUnassignedFutureAppointments = async (): Promise<Appointment[]> 
 export const getTodaysAppointmentForPatient = async (patientId: string) => {
     // ... (unchanged logic)
     const today = getNow();
-    const start = startOfDay(today);
-    const end = endOfDay(today);
+    const start = startOfDayJST(today);
+    const end = endOfDayJST(today);
 
     const appointments = await prisma.appointment.findMany({
         where: {
@@ -541,7 +540,7 @@ export const getUnresolvedAdminMemos = async (): Promise<Appointment[]> => {
                 { isMemoResolved: false },
                 {
                     isMemoResolved: true,
-                    updatedAt: { gte: startOfDay(getNow()) } // Keep today's resolved items visible
+                    updatedAt: { gte: startOfDayJST(getNow()) } // Keep today's resolved items visible
                 }
             ]
         },

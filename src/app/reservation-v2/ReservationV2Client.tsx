@@ -83,10 +83,14 @@ export function ReservationV2Client({
 
     // 本日の予約リスト (サイドバー用, 常に今日の分を表示)
     const todayAppointments = useMemo(() => {
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-        return allAppointments.filter(a =>
-            (typeof a.visitDate === 'string' ? a.visitDate : new Date(a.visitDate).toISOString()).startsWith(todayStr)
-        ).sort((a, b) => new Date(a.visitDate).getTime() - new Date(b.visitDate).getTime());
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        return allAppointments.filter(a => {
+            const visitDate = new Date(a.visitDate);
+            return visitDate >= todayStart && visitDate < todayEnd;
+        }).sort((a, b) => new Date(a.visitDate).getTime() - new Date(b.visitDate).getTime());
     }, [allAppointments]);
 
     // フィルター適用済みかどうか
