@@ -71,12 +71,7 @@ export function ReservationNotebookClient({
         }
     }, [editingAppointment, currentDate, isModalOpen]);
 
-    // モーダルが閉じたときに確認モードをリセット
-    useEffect(() => {
-        if (!isModalOpen) {
-            setIsConfirming(false);
-        }
-    }, [isModalOpen]);
+
 
     const handleCheckIn = async (appointmentId: string) => {
         try {
@@ -102,38 +97,20 @@ export function ReservationNotebookClient({
         }
     };
 
-    // Confirm Step (Local Validation)
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
 
-        if (!selectedPatientId) {
-            setErrorDialog({ isOpen: true, title: '入力エラー', message: '顧客を選択してください' });
-            return;
-        }
-
-        // 基本的なバリデーションを通過したら確認画面へ
-        setIsConfirming(true);
-    };
-
-    // Actual Submission
-    const handleFinalSubmit = async () => {
-        setIsSubmitting(true);
-        const form = document.querySelector('form') as HTMLFormElement; // Re-grab form data from the DOM (hidden inputs or state usage needed if visual form is gone)
-        // Wait, if the form is replaced by confirmation view, we can't grab it from DOM unless we kept the data in state or hidden fields.
-        // We have state: selectedPatientId, formDate, formTime.
-        // We lack: duration, staffId, memo, adminMemo.
-        // Solution: Keep the form mounted but hidden? Or better, use FormData constructed from State references if we controlled everything.
-        // Currently memos are uncontrolled. Let's make sure we capture them before switching to confirm view.
-        // OR: Simpler approach, keep "isConfirming" logic inside the form rendering, so inputs are still there but readonly? No, layouts change.
-
-        // Let's rely on controlled inputs for everything OR just hide the input fields with CSS instead of unmounting.
-        // For simplicity and robustness with unmounting: Let's capture ALL form data into a Ref or State when `handleSubmit` runs.
-        // Let's use State to hold draft data for "Confirmation View".
-    };
 
     // Instead of complex refactoring to fully controlled components for memos, 
     // let's grab the data in handleSubmit and store it in a temporary state object `draftData`.
-    const [draftData, setDraftData] = useState<any>(null);
+    const [draftData, setDraftData] = useState<{
+        patientId: string;
+        visitDate: string;
+        visitTime: string;
+        duration: FormDataEntryValue | null;
+        staffId: FormDataEntryValue | null;
+        memo: FormDataEntryValue | null;
+        adminMemo: FormDataEntryValue | null;
+        id?: string;
+    } | null>(null);
 
     const handlePreSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -257,7 +234,7 @@ export function ReservationNotebookClient({
     };
 
     // Helper to get staff name from ID (Hardcoded for demo mostly, but let's try to match)
-    const getStaffName = (id: any) => {
+    const getStaffName = (id: string | null | undefined) => {
         if (id === 'staff-001') return '高橋 院長';
         if (id === 'staff-002') return '佐々木 スタッフ';
         return '未定';
@@ -337,6 +314,15 @@ export function ReservationNotebookClient({
                                         <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                                             様
                                         </span>
+                                        {appointment.staffName ? (
+                                            <span className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded ml-2">
+                                                {appointment.staffName}
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded ml-2 italic">
+                                                フリー
+                                            </span>
+                                        )}
                                     </div>
                                     {appointment.memo && (
                                         <p className="mt-2 text-sm text-slate-600 bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg flex items-start gap-2">
@@ -495,6 +481,7 @@ export function ReservationNotebookClient({
                                                 <div className="flex gap-2 flex-shrink-0">
                                                     <button type="button" onClick={() => addTime(15)} className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-md border border-indigo-100 transition-colors">+15分</button>
                                                     <button type="button" onClick={() => addTime(30)} className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-md border border-indigo-100 transition-colors">+30分</button>
+                                                    <button type="button" onClick={() => addTime(60)} className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium rounded-md border border-indigo-100 transition-colors">+60分</button>
                                                 </div>
                                             </div>
                                         </div>

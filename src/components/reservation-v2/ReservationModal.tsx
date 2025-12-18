@@ -1,0 +1,451 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { scheduleAppointment } from '@/actions/appointmentActions';
+import { format, addMinutes, parseISO, addDays, startOfHour } from 'date-fns';
+import { Loader2, Search, User, Calendar, Clock, X, Check, AlertTriangle, AlertCircle } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
+import { ja } from 'date-fns/locale';
+
+interface Patient {
+    id: string;
+    name: string;
+    kana: string;
+    pId: number;
+}
+
+interface Staff {
+    id: string;
+    name: string;
+}
+
+interface ReservationModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    staffList: Staff[];
+    patients: Patient[]; // 全患者リスト (クライアント検索用)
+    initialDate?: string; // yyyy-MM-dd
+}
+
+const toKatakana = (str: string) => {
+    return str.replace(/[\u3041-\u3096]/g, function (match) {
+        var chr = match.charCodeAt(0) + 0x60;
+        return String.fromCharCode(chr);
+    });
+};
+
+export function ReservationModal({
+    isOpen,
+    onClose,
+    staffList,
+    patients,
+    initialDate
+}: ReservationModalProps) {
+    const [step, setStep] = useState<'input' | 'confirm'>('input');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
+
+    // Form State
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+    const [visitDate, setVisitDate] = useState(initialDate || format(new Date(), 'yyyy-MM-dd'));
+    const [visitTime, setVisitTime] = useState('10:00');
+    const [duration, setDuration] = useState('60');
+    const [staffId, setStaffId] = useState('');
+    const [memo, setMemo] = useState('');
+    const [adminMemo, setAdminMemo] = useState('');
+
+    // Patient Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const debouncedQuery = useDebounce(searchQuery, 300);
+
+    // 検索結果のフィルタリング
+    const filteredPatients = useMemo(() => {
+        if (!debouncedQuery) return [];
+        const q = debouncedQuery.toLowerCase();
+        const qKana = toKatakana(q);
+        return patients.filter(p =>
+            p.name.toLowerCase().includes(q) ||
+            p.kana.toLowerCase().includes(q) ||
+            p.kana.includes(qKana) ||
+            p.pId.toString().includes(q)
+        ).slice(0, 5); // 上位5件のみ表示（高さを抑えるため）
+    }, [debouncedQuery, patients]);
+
+    // Reset form when opened
+    useEffect(() => {
+        if (isOpen) {
+            setStep('input');
+            setSearchQuery('');
+            setSelectedPatient(null);
+            setVisitDate(initialDate || format(new Date(), 'yyyy-MM-dd'));
+            // 時間を現在時刻に近い切りの良い時間に設定（例：10:00）
+            const now = new Date();
+            const nextHour = startOfHour(addMinutes(now, 60));
+            setVisitTime(format(nextHour, 'HH:mm'));
+
+            setMemo('');
+            setAdminMemo('');
+            setStaffId('');
+            setIsSubmitting(false);
+            setError('');
+        }
+    }, [isOpen, initialDate]);
+
+    // 日付操作ヘルパー
+    const setQuickDate = (type: 'today' | 'tomorrow' | 'nextWeek') => {
+        const today = new Date();
+        if (type === 'today') setVisitDate(format(today, 'yyyy-MM-dd'));
+        if (type === 'tomorrow') setVisitDate(format(addDays(today, 1), 'yyyy-MM-dd'));
+        if (type === 'nextWeek') setVisitDate(format(addDays(today, 7), 'yyyy-MM-dd'));
+    };
+
+    // 時間操作ヘルパー
+    const addTime = (minutes: number) => {
+        const dateStr = `${visitDate}T${visitTime}`;
+        const current = new Date(dateStr);
+        if (isNaN(current.getTime())) return;
+        const next = addMinutes(current, minutes);
+        setVisitTime(format(next, 'HH:mm'));
+    };
+
+    const handleSubmit = async () => {
+        if (!selectedPatient) return;
+
+        setIsSubmitting(true);
+        setError('');
+
+        const formData = new FormData();
+        formData.append('patientId', selectedPatient.id);
+        formData.append('visitDate', visitDate);
+        formData.append('visitTime', visitTime);
+        formData.append('duration', duration);
+        if (staffId) formData.append('staffId', staffId);
+        if (memo) formData.append('memo', memo);
+        if (adminMemo) formData.append('adminMemo', adminMemo);
+
+        try {
+            const result = await scheduleAppointment(formData);
+            if (result.success) {
+                onClose();
+            } else {
+                setError(result.message || '予約の作成に失敗しました');
+            }
+        } catch (err) {
+            setError('エラーが発生しました');
+            console.error(err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const getStaffName = (id: string) => staffList.find(s => s.id === id)?.name || '未定';
+
+    // 確認画面へ進む前のバリデーション
+    const handleConfirmCheck = () => {
+        if (!selectedPatient) {
+            setError('お客様を選択してください');
+            return;
+        }
+        if (!visitDate || !visitTime) {
+            setError('日時を入力してください');
+            return;
+        }
+        setError('');
+        setStep('confirm');
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
+            <DialogContent className="sm:max-w-5xl w-[95vw] h-[90vh] p-0 overflow-hidden flex flex-col">
+                <DialogHeader className="px-6 py-3 border-b border-slate-100 flex-shrink-0">
+                    <DialogTitle className="text-xl text-slate-800">
+                        {step === 'input' ? '新規予約を作成' : '予約内容の確認'}
+                    </DialogTitle>
+                </DialogHeader>
+
+                <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
+                    {error && (
+                        <div className="mb-4 text-sm font-medium text-red-600 flex items-center gap-2 bg-red-50 p-3 rounded border border-red-100">
+                            <AlertCircle className="w-4 h-4" />
+                            {error}
+                        </div>
+                    )}
+
+                    {step === 'input' ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* 左カラム: 必須情報 */}
+                            <div className="space-y-6">
+                                {/* 1. お客様検索 */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                        <User className="w-4 h-4 text-slate-500" /> お客様
+                                    </label>
+
+                                    {!selectedPatient ? (
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                            <Input
+                                                placeholder="名前、カナ、No.で検索..."
+                                                className="pl-10 h-11 bg-white border-slate-200 focus:border-indigo-500 text-base"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                            />
+                                            {/* 検索結果ドロップダウン */}
+                                            {searchQuery && filteredPatients.length > 0 && (
+                                                <div className="absolute top-12 right-0 left-auto w-[400px] bg-white shadow-xl rounded-lg border border-slate-100 z-[100] overflow-hidden">
+                                                    {filteredPatients.map(patient => (
+                                                        <button
+                                                            key={patient.id}
+                                                            onClick={() => {
+                                                                setSelectedPatient(patient);
+                                                                setSearchQuery('');
+                                                            }}
+                                                            className="w-full text-left p-3 hover:bg-slate-50 border-b last:border-0 border-slate-50 transition-colors flex justify-between items-center group"
+                                                        >
+                                                            <div>
+                                                                <div className="font-bold text-slate-800">{patient.name}</div>
+                                                                <div className="text-xs text-slate-500 flex gap-2">
+                                                                    <span>{patient.kana}</span>
+                                                                    <span className="bg-slate-100 px-1.5 rounded text-slate-600">No.{patient.pId}</span>
+                                                                </div>
+                                                            </div>
+                                                            <User className="w-4 h-4 text-slate-300 group-hover:text-indigo-500" />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between animate-in fade-in zoom-in-95 duration-200">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-green-100 p-2 rounded-full text-green-700">
+                                                    <Check className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">選択済み</span>
+                                                        <span className="text-xs text-green-600">No.{selectedPatient.pId}</span>
+                                                    </div>
+                                                    <div className="font-bold text-lg text-slate-800">{selectedPatient.name}</div>
+                                                    <div className="text-sm text-slate-500">{selectedPatient.kana}</div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setSelectedPatient(null)}
+                                                className="p-2 hover:bg-green-100 rounded-full text-green-600 transition-colors"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 2. 日時・時間 */}
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-slate-500" /> 日時・時間
+                                    </label>
+
+                                    <div className="space-y-3">
+                                        <div className="relative">
+                                            <Input
+                                                type="date"
+                                                className="h-11 bg-white border-slate-200 pr-10"
+                                                value={visitDate}
+                                                onChange={(e) => setVisitDate(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="time"
+                                                className="h-11 bg-white border-slate-200 flex-1"
+                                                value={visitTime}
+                                                onChange={(e) => setVisitTime(e.target.value)}
+                                            />
+                                            <select
+                                                className="h-11 px-3 border border-slate-200 rounded-md bg-white text-slate-800 min-w-[100px]"
+                                                value={duration}
+                                                onChange={(e) => setDuration(e.target.value)}
+                                            >
+                                                <option value="30">30分</option>
+                                                <option value="60">60分</option>
+                                                <option value="90">90分</option>
+                                                <option value="120">120分</option>
+                                            </select>
+                                        </div>
+
+                                        {/* クイックアクション */}
+                                        <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
+                                            <div className="flex gap-1">
+                                                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setQuickDate('today')}>今日</Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setQuickDate('tomorrow')}>明日</Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setQuickDate('nextWeek')}>来週</Button>
+                                            </div>
+                                            <div className="w-px h-4 bg-slate-200 mx-1"></div>
+                                            <div className="flex gap-1">
+                                                <Button variant="outline" size="sm" className="h-8 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" onClick={() => addTime(15)}>+15分</Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" onClick={() => addTime(30)}>+30分</Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" onClick={() => addTime(60)}>+60分</Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3. 担当者 */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">担当者</label>
+                                    <select
+                                        className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-slate-800"
+                                        value={staffId}
+                                        onChange={(e) => setStaffId(e.target.value)}
+                                    >
+                                        <option value="">担当者 (未定)</option>
+                                        {staffList.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* 右カラム: メモ・オプション */}
+                            <div className="space-y-6">
+                                {/* 受付メモ */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-baseline">
+                                        <label className="text-sm font-bold text-slate-700">受付メモ</label>
+                                        <span className="text-xs text-slate-400">※1-2行程度の簡単な内容</span>
+                                    </div>
+                                    <Textarea
+                                        placeholder="患者様からの要望など"
+                                        className="min-h-[100px] bg-white border-slate-200 resize-none"
+                                        value={memo}
+                                        onChange={(e) => setMemo(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* 申し送り事項 */}
+                                <div className="bg-red-50 border border-red-100 rounded-xl p-4 space-y-3">
+                                    <label className="text-sm font-bold text-red-600 flex items-center gap-2">
+                                        <AlertTriangle className="w-4 h-4" /> 申し送り事項
+                                    </label>
+                                    <span className="text-xs text-red-400 block -mt-2">スタッフ共有事項を入力（タイムライン強調表示）</span>
+
+                                    <Textarea
+                                        placeholder="例: 前回施術後に赤みが出たため注意"
+                                        className="min-h-[80px] bg-white border-red-100 focus:border-red-300 resize-none placeholder:text-red-200 text-red-800"
+                                        value={adminMemo}
+                                        onChange={(e) => setAdminMemo(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* アクションボタン (右カラム下部) */}
+                                <div className="pt-4 mt-auto flex justify-end gap-3">
+                                    <Button variant="ghost" onClick={onClose} className="font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100">キャンセル</Button>
+                                    <Button
+                                        onClick={handleConfirmCheck}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 shadow-md shadow-indigo-200"
+                                    >
+                                        確認画面へ
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        // 確認画面
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+                            {/* 左カラム: 確認情報 */}
+                            <div className="space-y-6">
+                                {/* 1. お客様 */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                        <User className="w-4 h-4 text-slate-500" /> お客様
+                                    </label>
+                                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-slate-200 p-2 rounded-full text-slate-600">
+                                                <User className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-slate-500">No.{selectedPatient?.pId}</span>
+                                                </div>
+                                                <div className="font-bold text-lg text-slate-800">{selectedPatient?.name} 様</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 2. 日時 */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-slate-500" /> 日時・時間
+                                    </label>
+                                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex gap-4 items-center">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="w-4 h-4 text-slate-400" />
+                                            <span className="font-bold text-slate-800">{format(parseISO(visitDate), 'yyyy-MM-dd (eee)', { locale: ja })}</span>
+                                        </div>
+                                        <div className="w-px h-4 bg-slate-300"></div>
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-4 h-4 text-slate-400" />
+                                            <span className="font-bold text-slate-800">{visitTime}</span>
+                                            <span className="text-xs text-slate-500">({duration}分)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3. 担当者 */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">担当者</label>
+                                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 font-bold text-slate-800">
+                                        {getStaffName(staffId)}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 右カラム: メモ・ボタン */}
+                            <div className="space-y-6 flex flex-col">
+                                {/* 受付メモ */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700">受付メモ</label>
+                                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 min-h-[100px] text-sm text-slate-700 whitespace-pre-wrap">
+                                        {memo || <span className="text-slate-400">なし</span>}
+                                    </div>
+                                </div>
+
+                                {/* 申し送り事項 */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-red-600 flex items-center gap-2">
+                                        <AlertTriangle className="w-4 h-4" /> 申し送り事項
+                                    </label>
+                                    <div className="bg-red-50 border border-red-100 rounded-lg p-3 min-h-[80px] text-sm text-red-800 whitespace-pre-wrap">
+                                        {adminMemo || <span className="text-red-300">なし</span>}
+                                    </div>
+                                </div>
+
+                                {/* アクションボタン (確認画面) */}
+                                <div className="pt-4 mt-auto flex justify-end gap-3">
+                                    <Button variant="ghost" onClick={() => setStep('input')} disabled={isSubmitting} className="font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                                        戻って修正
+                                    </Button>
+                                    <Button
+                                        onClick={handleSubmit}
+                                        disabled={isSubmitting}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 shadow-md shadow-indigo-200"
+                                    >
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        確定する
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}

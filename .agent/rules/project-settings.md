@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Project Settings: Handover Notebook
 
 <!--
@@ -154,7 +158,9 @@ Read this file at the start of each session to understand the project.
 | **UIガイドライン** | `docs/design/UI_DESIGN_GUIDELINES.md` |
 | **設計原則** | `docs/design/DESIGN_PRINCIPLES.md` |
 | **変更履歴** | `docs/management/PLAN_CHANGELOG.md` |
-
+| **モバイルUXユースケース** | docs/usecases/USECASES_MOBILE.md |
+| **モバイルUX実装計画** | docs/usecases/MOBILE_UX_PLAN.md |
+| **モバイルUXギャップ分析** | docs/usecases/MOBILE_UX_GAP_REVIEW.md |
 ---
 
 *Project Settings Version: 1.1 (2025-12-18)*
