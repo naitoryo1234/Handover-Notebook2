@@ -1,37 +1,32 @@
 # Project Status
 
-最終更新: 2025-12-19 00:55
+最終更新: 2025-12-19 01:45
 
 ---
 
 ## 🎯 Current Phase
 
-**Phase 8: Reservation V2 完成 → 実装チェックリスト消化フェーズ**
+**Phase 9: コード監査・プロダクト戦略策定 → 次フェーズへ準備**
 
 ---
 
 ## ✅ Completed (今回のセッション)
 
-- [x] **JST タイムゾーン対応**
-  - `date-fns-tz` を導入
-  - `lib/dateUtils.ts` に `startOfDayJST`, `endOfDayJST`, `formatJST` 関数を追加
-  - サーバー(UTC)とクライアント(JST)の日付境界ずれを解消
-  - `appointmentServiceV2.ts` のクエリをJST基準に修正
+- [x] **コード監査（CTO視点）**
+  - 5項目評価: アーキテクチャ(B)、UI/UX(B+)、コード品質(C+)、セキュリティ(D)、モダン機能(B)
+  - 総合スコア: 64/100点（プロトタイプ〜β版レベル）
+  - `docs/CODE_AUDIT_REPORT.md` を作成
 
-- [x] **チェックイン/完了のUndoボタン実装**
-  - Toast通知に「元に戻す」リンクを追加
-  - `cancelCheckIn` → `scheduled` ステータスに修正（ボタン消失バグ修正）
+- [x] **プロダクト戦略ディスカッション**
+  - 「汎用コア + 業態プリセット」の分離型SaaS戦略を確立
+  - 市場ポジショニング: レッドオーシャンの隙間（月額¥2,000帯）
+  - 差別化ポイント: 音声入力 + AI整形（キラー機能）
+  - `docs/design/PRODUCT_STRATEGY.md` を作成
 
-- [x] **キャンセル済み予約のボタン統一**
-  - アイコンのみ表示（テキスト削除）
-  - ボタンサイズを `p-2` に統一
-
-- [x] **SaaS開発ナレッジ蓄積フォルダ作成**
-  - `docs/saas-pitfalls/` フォルダを新規作成
-  - `TIMEZONE.md` にタイムゾーン問題の詳細記録
-
-- [x] **12月19日サンプルデータ追加**
-  - `prisma/seed-dec19.ts` で様々なパターンの予約を追加
+- [x] **開発フェーズの整理**
+  - Phase 1: 土台完成（認証再有効化、予約V2スマホ対応）
+  - Phase 2: キラー機能の磨き込み（音声入力+AI整形）
+  - Phase 3: ベータリリース
 
 ---
 
@@ -45,17 +40,20 @@
 
 ## 📋 Next Up (次回のセッション)
 
-### P1 (Should - SaaS品質向上)
-1. **申し送り解決マーク**: 解決済みボタン、解決者名・日時記録
-2. **カレンダー選択と全期間モードの排他制御**: UIの一貫性向上
+### Phase 1: 土台完成タスク（優先度順）
+1. **認証の再有効化** - middleware.ts修正、NextAuth.js再実装
+2. **予約V2のスマホ対応** - テーブル → カード表示切替
+3. **Zodバリデーション導入** - Server Actionsへのスキーマ適用
+4. **`any`型の除去** - 12箇所の修正
 
-### P2 (Nice to Have)
-- キーボードショートカット (N: 新規予約, T: 今日)
-- 印刷機能 (`@media print`)
-- モバイル最適化
+### RNV2チェックリスト（P1）
+- 申し送り解決マーク機能
+- カレンダー選択と全期間モードの排他制御
 
 ### 参照ドキュメント
 - `docs/rnv2-checklist/RNV2_IMPLEMENTATION_CHECKLIST.md`
+- `docs/design/PRODUCT_STRATEGY.md`
+- `docs/CODE_AUDIT_REPORT.md`
 
 ---
 
@@ -63,7 +61,9 @@
 
 | 問題 | 影響度 | 回避策 |
 |:---|:---|:---|
+| **認証が無効化中** | 高 | 商用リリース前に必須修正 |
 | ESLint `react-hooks/set-state-in-effect` | 中 | `--no-verify` でコミット中 |
+| `any`型が12箇所 | 中 | Phase 1で修正 |
 
 ---
 
@@ -71,7 +71,7 @@
 
 - **Gemini.md配置先**: `C:\Users\ryo\.gemini\GEMINI.md`
 - **DB状態**: Vercel Postgres (Neon) 接続済み
-- **認証**: NextAuth.js v5 + Credentials Provider
+- **認証**: NextAuth.js v5 + Credentials Provider（現在無効化中）
 - **ブランチ**: `feature/reservation-v2`
 - **開発サーバー**: `npm run dev`
 
@@ -80,16 +80,19 @@
 ## 📝 Session Handover Notes
 
 ### コンテキスト
-JSTタイムゾーン対応完了。Vercel(UTC)環境でも日本時間基準で正しく動作するようになった。
+今回は議論のみのセッション。コード監査とプロダクト戦略の策定を実施。
 
 ### 決定事項
-- `date-fns-tz` を使用しJSTを明示的に指定
-- 問題発生時のナレッジを `docs/saas-pitfalls/` に蓄積する運用開始
-- 実装完了後に包括的テストチェックリストを作成・実行する方針
+- **プロダクト戦略**: 「汎用コア + 業態プリセット」の分離型SaaS
+- **市場ポジショニング**: 大手SaaSの隙間（月額¥2,000帯）
+- **差別化ポイント**: 音声入力 + AI整形をキラー機能として磨き込み
+- **開発フェーズ**: Phase 1（土台完成）→ Phase 2（キラー機能磨き込み）→ Phase 3（ベータリリース）
 
 ### 次回の着手点
-1. `docs/rnv2-checklist/RNV2_IMPLEMENTATION_CHECKLIST.md` のP1タスクから順に実装
-2. 申し送り解決マーク機能の実装
+1. 認証の再有効化（middleware.ts）
+2. 予約V2のスマホ対応
+3. RNV2チェックリストのP1タスク
 
 ### 保留事項
 - ESLint `react-hooks/set-state-in-effect` ルールへの対応
+- 業態プリセット（鍼灸院向け等）の具体的な実装設計
