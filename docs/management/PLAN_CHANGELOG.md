@@ -497,10 +497,41 @@ GEMINI_API_KEY=your_api_key_here
 
 ---
 
+## v2.2.0 (2025-12-18)
+
+### 変更内容
+- **Reservation V2 UI 統一仕上げ**
+  - アクセントカラーを緑（Emerald）に統一
+    - MiniCalendar, SidebarContainer, ReservationToolbar, ReservationModal, ReservationTable, SearchStatusBar
+  - 入力フォーカス時の枠色を緑（または赤：申し送り欄）に変更
+  - 検索結果ドロップダウンを右寄せレイアウトに変更（IME回避）
+
+- **削除機能の完全実装**
+  - `ConfirmDialog` を使用した削除確認モーダル
+  - キャンセル済み予約のボタン無効化（グレーアウト）
+  - `cancelAppointmentAction` の `revalidatePath` に `/reservation-v2` を追加
+
+- **データ取得の統一**
+  - 全期間モードでもキャンセル済み予約を表示するよう変更（`includeCancelled: true`）
+  - 日付指定モードと全期間モードで削除後の挙動を統一
+
+- **ナビゲーションのV2切り替え**
+  - `GlobalNavigation.tsx`: Reservation Notebook リンクを `/reservation-v2` に変更
+  - `page.tsx` (ホーム): Reservation Notebook カードを `/reservation-v2` に変更
+  - V1 (`/reservation-notebook`) は残置、直接アクセスで使用可能
+
+### 変更の背景
+- UIの一貫性向上（カラーテーマの統一）によりブランド感を強化
+- 削除機能をネイティブダイアログからカスタムモーダルに変更し、UX向上
+- 全期間/日付指定モードでの挙動差異を解消し、ユーザー混乱を防止
+- V2 を正式版として採用し、メイン導線を切り替え
+
+---
+
 ## 次回予定
 
-1. **Reservation V2 動作確認**: ユーザーによる実装確認
-2. **ESLint ルール調整**: `react-hooks/set-state-in-effect` エラーの根本対応
-3. **API連携**: Server Actions との統合テスト
-4. **モバイル対応**: Reservation V2 のレスポンシブ対応
+1. **RNV2 サイドバー「本日の予定」実装**: サイドバーに当日の予約一覧を表示
+2. **V1 の完全削除検討**: タイミングを見て `/reservation-notebook` を削除
+3. **デバッグ・細かい改善**: 実運用を想定した微調整
+4. **ESLint ルール調整**: `react-hooks/set-state-in-effect` エラーの根本対応
 
