@@ -5,7 +5,7 @@ import { format, addDays, parseISO } from 'date-fns';
 
 import { useRouter } from 'next/navigation';
 import { Appointment } from '@/services/appointmentServiceV2';
-import { cancelAppointmentAction, checkInAppointmentAction, completeAppointmentAction } from '@/actions/appointmentActions';
+import { cancelAppointmentAction, checkInAppointmentAction, completeAppointmentAction, cancelCheckInAction, undoAppointmentStatusAction } from '@/actions/appointmentActions';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { ReservationToolbar } from '@/components/reservation-v2/ReservationToolbar';
@@ -215,7 +215,19 @@ export function ReservationV2Client({
                                 onCheckIn={async (id) => {
                                     const result = await checkInAppointmentAction(id);
                                     if (result.success) {
-                                        toast.success('チェックイン完了', { description: 'お客様の来店を確認しました' });
+                                        toast.success('チェックイン完了', {
+                                            description: 'お客様の来店を確認しました',
+                                            action: {
+                                                label: '元に戻す',
+                                                onClick: async () => {
+                                                    const undoResult = await cancelCheckInAction(id);
+                                                    if (undoResult.success) {
+                                                        toast.info('チェックインを取り消しました');
+                                                    }
+                                                }
+                                            },
+                                            duration: 5000
+                                        });
                                     } else {
                                         toast.error('エラー', { description: result.message || 'チェックインに失敗しました' });
                                     }
@@ -223,7 +235,19 @@ export function ReservationV2Client({
                                 onComplete={async (id) => {
                                     const result = await completeAppointmentAction(id);
                                     if (result.success) {
-                                        toast.success('施術完了', { description: '予約が完了になりました' });
+                                        toast.success('施術完了', {
+                                            description: '予約が完了になりました',
+                                            action: {
+                                                label: '元に戻す',
+                                                onClick: async () => {
+                                                    const undoResult = await undoAppointmentStatusAction(id, 'arrived');
+                                                    if (undoResult.success) {
+                                                        toast.info('完了を取り消しました');
+                                                    }
+                                                }
+                                            },
+                                            duration: 5000
+                                        });
                                     } else {
                                         toast.error('エラー', { description: result.message || '完了処理に失敗しました' });
                                     }
@@ -301,7 +325,19 @@ export function ReservationV2Client({
                     onCheckIn={async (id) => {
                         const result = await checkInAppointmentAction(id);
                         if (result.success) {
-                            toast.success('チェックイン完了', { description: 'お客様の来店を確認しました' });
+                            toast.success('チェックイン完了', {
+                                description: 'お客様の来店を確認しました',
+                                action: {
+                                    label: '元に戻す',
+                                    onClick: async () => {
+                                        const undoResult = await cancelCheckInAction(id);
+                                        if (undoResult.success) {
+                                            toast.info('チェックインを取り消しました');
+                                        }
+                                    }
+                                },
+                                duration: 5000
+                            });
                         } else {
                             toast.error('エラー', { description: result.message || 'チェックインに失敗しました' });
                         }
@@ -309,7 +345,19 @@ export function ReservationV2Client({
                     onComplete={async (id) => {
                         const result = await completeAppointmentAction(id);
                         if (result.success) {
-                            toast.success('施術完了', { description: '予約が完了になりました' });
+                            toast.success('施術完了', {
+                                description: '予約が完了になりました',
+                                action: {
+                                    label: '元に戻す',
+                                    onClick: async () => {
+                                        const undoResult = await undoAppointmentStatusAction(id, 'arrived');
+                                        if (undoResult.success) {
+                                            toast.info('完了を取り消しました');
+                                        }
+                                    }
+                                },
+                                duration: 5000
+                            });
                         } else {
                             toast.error('エラー', { description: result.message || '完了処理に失敗しました' });
                         }

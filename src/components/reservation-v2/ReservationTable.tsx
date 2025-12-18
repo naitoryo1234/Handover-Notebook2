@@ -169,21 +169,25 @@ export function ReservationTable({ appointments, onEdit, onDelete, onCheckIn, on
                                 <td className="px-4 py-4">
                                     <div className="flex items-center justify-end gap-2">
                                         {appointment.status === 'cancelled' ? (
+                                            // キャンセル済み: 全てグレーアウト
                                             <>
-                                                <span className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-400 text-sm font-bold rounded-lg cursor-not-allowed">
+                                                <span
+                                                    className="p-2 bg-slate-100 text-slate-300 rounded-lg cursor-not-allowed"
+                                                    title="記録"
+                                                >
                                                     <FileText className="w-4 h-4" />
-                                                    記録
                                                 </span>
                                                 <button
                                                     disabled
-                                                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-400 text-sm font-medium rounded-lg border border-slate-200 cursor-not-allowed"
+                                                    className="p-2 bg-slate-100 text-slate-300 rounded-lg cursor-not-allowed"
+                                                    title="編集"
                                                 >
                                                     <Edit3 className="w-4 h-4" />
-                                                    編集
                                                 </button>
                                                 <button
                                                     disabled
-                                                    className="p-1.5 text-slate-300 rounded-lg cursor-not-allowed"
+                                                    className="p-2 text-slate-300 rounded-lg cursor-not-allowed"
+                                                    title="削除"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
