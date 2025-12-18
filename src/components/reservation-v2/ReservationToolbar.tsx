@@ -72,8 +72,37 @@ export function ReservationToolbar({
         <div className="bg-white border-b border-slate-200">
             {/* 上段: 日付ナビゲーション & メインアクション */}
             <div className="px-6 py-3 flex items-center justify-between border-b border-slate-100">
-                {/* 左: 日付操作 */}
+                {/* 左: 日付操作 & ナビゲーション */}
                 <div className="flex items-center gap-6">
+                    {/* ナビゲーションアイコン */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                        <Link
+                            href="/"
+                            title="ホーム"
+                            className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-700 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                        >
+                            <Home className="w-5 h-5" />
+                        </Link>
+                        <div className="w-px h-4 bg-slate-200" />
+                        <Link
+                            href="/customer-notebook"
+                            title="Customer Notebook"
+                            className="flex items-center justify-center p-2 text-indigo-600 hover:text-indigo-700 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                        >
+                            <Users className="w-5 h-5" />
+                        </Link>
+                        <div className="w-px h-4 bg-slate-200" />
+                        <Link
+                            href="/reservation-v2"
+                            title="Reservation Notebook"
+                            className="flex items-center justify-center p-2 text-emerald-600 bg-white shadow-sm rounded-md"
+                        >
+                            <Calendar className="w-5 h-5" />
+                        </Link>
+                    </div>
+
+                    <div className="h-8 w-px bg-slate-200" />
+
                     {/* 日付移動 */}
                     <div className="flex items-center gap-2">
                         <button
@@ -146,32 +175,7 @@ export function ReservationToolbar({
 
                 {/* 右側: ナビリンク(サイドバー閉時) + サイドバートグル + 新規予約 */}
                 <div className="flex items-center gap-2">
-                    {/* サイドバー閉時のみナビリンク表示 */}
-                    {!isSidebarOpen && (
-                        <div className="flex items-center gap-1 mr-2 bg-slate-100/50 p-1 rounded-lg">
-                            <Link
-                                href="/"
-                                className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-md transition-colors"
-                                title="ホーム"
-                            >
-                                <Home className="w-4 h-4" />
-                            </Link>
-                            <Link
-                                href="/customer-notebook"
-                                className="flex items-center justify-center p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-md transition-colors"
-                                title="Customer Notebook"
-                            >
-                                <Users className="w-4 h-4" />
-                            </Link>
-                            <Link
-                                href="/reservation-v2"
-                                className="flex items-center justify-center p-2 text-emerald-600 bg-emerald-50 rounded-md"
-                                title="Reservation Notebook"
-                            >
-                                <Calendar className="w-4 h-4" />
-                            </Link>
-                        </div>
-                    )}
+
 
                     {/* サイドバートグルボタン */}
                     <button

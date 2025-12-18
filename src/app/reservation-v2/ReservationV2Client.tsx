@@ -12,6 +12,7 @@ import { ReservationTable } from '@/components/reservation-v2/ReservationTable';
 import { SearchStatusBar } from '@/components/reservation-v2/SearchStatusBar';
 import { MiniCalendar } from '@/components/reservation-v2/MiniCalendar';
 
+import { TodayAppointmentsList } from '@/components/reservation-v2/TodayAppointmentsList';
 import { SidebarContainer } from '@/components/reservation-v2/SidebarContainer';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ReservationModal, EditingAppointment } from '@/components/reservation-v2/ReservationModal';
@@ -78,6 +79,14 @@ export function ReservationV2Client({
 
     // 削除確認モーダル State
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+    // 本日の予約リスト (サイドバー用, 常に今日の分を表示)
+    const todayAppointments = useMemo(() => {
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        return allAppointments.filter(a =>
+            (typeof a.visitDate === 'string' ? a.visitDate : new Date(a.visitDate).toISOString()).startsWith(todayStr)
+        ).sort((a, b) => new Date(a.visitDate).getTime() - new Date(b.visitDate).getTime());
+    }, [allAppointments]);
 
     // フィルター適用済みかどうか
     const hasActiveFilters = searchQuery !== ''
@@ -170,9 +179,15 @@ export function ReservationV2Client({
             router.push(`/reservation-v2?date=${format(tomorrow, 'yyyy-MM-dd')}`);
         } else if (action === 'all') {
             setViewMode('all');
-            // 日付URLはそのままで良い（解除後に戻れるように）。
-            // UI上のナビゲーションは無効化される。
         }
+    };
+
+    // 顧客選択ハンドラ (サイドバーからの遷移用)
+    const handlePatientSelect = (patientName: string) => {
+        setSearchQuery(patientName); // 名前で検索
+        setViewMode('all');          // 全期間表示
+        setIncludePast(false);       // 過去分は含めない (これからの方が見たい)
+        setSelectedStaffId('all');   // スタッフ絞り込み解除
     };
 
     return (
@@ -190,6 +205,12 @@ export function ReservationV2Client({
                                     setViewMode('daily');
                                     router.push(`/reservation-v2?date=${date}`);
                                 }}
+                            />
+                        }
+                        todayListContent={
+                            <TodayAppointmentsList
+                                appointments={todayAppointments}
+                                onPatientSelect={handlePatientSelect}
                             />
                         }
                     />

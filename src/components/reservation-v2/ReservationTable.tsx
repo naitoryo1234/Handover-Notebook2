@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Check, Circle, Ban, User, Edit3, Trash2, FileText, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, Circle, Ban, User, Edit3, Trash2, FileText, AlertTriangle, ChevronDown, ChevronUp, AlertCircle, FileText as FileTextIcon } from 'lucide-react';
 import { Appointment } from '@/services/appointmentServiceV2';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ReservationTableProps {
     appointments: Appointment[];
@@ -13,21 +14,14 @@ interface ReservationTableProps {
     onDelete: (id: string) => void;
 }
 
-export function ReservationTable({ appointments, onEdit, onDelete }: ReservationTableProps) {
-    // メモ展開状態の管理
-    const [expandedMemos, setExpandedMemos] = useState<Set<string>>(new Set());
+type DialogState = {
+    type: 'admin' | 'memo';
+    appointment: Appointment;
+} | null;
 
-    const toggleMemoExpand = (id: string) => {
-        setExpandedMemos(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
-    };
+export function ReservationTable({ appointments, onEdit, onDelete }: ReservationTableProps) {
+    // 申し送り・メモダイアログ用
+    const [dialogState, setDialogState] = useState<DialogState>(null);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -67,156 +61,202 @@ export function ReservationTable({ appointments, onEdit, onDelete }: Reservation
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                    {appointments.map((appointment) => (
-                        <tr
-                            key={appointment.id}
-                            className={`hover:bg-slate-50 transition-colors ${appointment.status === 'cancelled' ? 'opacity-50' : ''
-                                }`}
-                        >
-                            {/* 状態 */}
-                            <td className="px-4 py-4">
-                                {getStatusIcon(appointment.status)}
-                            </td>
+                    {appointments.map((appointment) => {
+                        const isPast = new Date(appointment.visitDate).getTime() + (appointment.duration * 60000) < new Date().getTime();
+                        const isDimmed = appointment.status === 'cancelled' || appointment.status === 'completed' || isPast;
 
-                            {/* 日時・時間 */}
-                            <td className="px-4 py-4">
-                                <div className="text-xs text-slate-500 font-mono">
-                                    {format(new Date(appointment.visitDate), 'yyyy/MM/dd (E)', { locale: ja })}
-                                </div>
-                                <div className="text-lg font-bold text-slate-800 font-mono">
-                                    {format(new Date(appointment.visitDate), 'HH:mm')}
-                                </div>
-                            </td>
+                        return (
+                            <tr
+                                key={appointment.id}
+                                className={`transition-colors ${isDimmed
+                                    ? 'bg-slate-50/80 opacity-60 hover:bg-slate-100/80'
+                                    : 'hover:bg-slate-50'
+                                    }`}
+                            >
+                                {/* 状態 */}
+                                <td className="px-4 py-4">
+                                    {getStatusIcon(appointment.status)}
+                                </td>
 
-                            {/* お客様名 */}
-                            <td className="px-4 py-4">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <Link
-                                        href={`/customers/${appointment.patientId}`}
-                                        className="text-lg font-bold text-slate-800 hover:text-emerald-600 transition-colors truncate"
-                                        title={appointment.patientName}
-                                    >
-                                        {appointment.patientName}
-                                    </Link>
-                                    {appointment.visitCount && (
-                                        <span className="flex-shrink-0 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full whitespace-nowrap">
-                                            {appointment.visitCount}回目
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="text-sm text-slate-500 truncate">
-                                    {appointment.patientKana}
-                                </div>
-                            </td>
-
-                            {/* 担当者 */}
-                            <td className="px-4 py-4">
-                                {appointment.staffName ? (
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                        <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                        <span className="text-sm text-slate-700 truncate" title={appointment.staffName}>
-                                            {appointment.staffName}
-                                        </span>
+                                {/* 日時・時間 */}
+                                <td className="px-4 py-4">
+                                    <div className="text-xs text-slate-500 font-mono">
+                                        {format(new Date(appointment.visitDate), 'yyyy/MM/dd (E)', { locale: ja })}
                                     </div>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full animate-pulse whitespace-nowrap">
-                                        未割り当て
-                                    </span>
-                                )}
-                            </td>
+                                    <div className={`text-lg font-bold font-mono ${isDimmed ? 'text-slate-500' : 'text-slate-800'}`}>
+                                        {format(new Date(appointment.visitDate), 'HH:mm')}
+                                    </div>
+                                </td>
 
-                            {/* メモ */}
-                            <td className="px-4 py-4 max-w-xs">
-                                {(appointment.memo || appointment.adminMemo) && (
-                                    <div
-                                        className="cursor-pointer group"
-                                        onClick={() => toggleMemoExpand(appointment.id)}
-                                    >
-                                        {appointment.memo && (
-                                            <p className={`text-sm text-slate-600 mb-1 ${expandedMemos.has(appointment.id) ? '' : 'line-clamp-2'}`}>
-                                                {appointment.memo}
-                                            </p>
-                                        )}
-                                        {appointment.adminMemo && (
-                                            <div className={`text-sm p-2 rounded-md border ${appointment.isMemoResolved
-                                                ? 'bg-slate-50 border-slate-200 text-slate-500'
-                                                : 'bg-red-50 border-red-200 text-red-700'
+                                {/* お客様名 */}
+                                <td className="px-4 py-4">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <Link
+                                            href={`/customers/${appointment.patientId}`}
+                                            className={`text-lg font-bold transition-colors truncate ${isDimmed
+                                                ? 'text-slate-600 hover:text-slate-800'
+                                                : 'text-slate-800 hover:text-emerald-600'
+                                                }`}
+                                            title={appointment.patientName}
+                                        >
+                                            {appointment.patientName}
+                                        </Link>
+                                        {appointment.visitCount && (
+                                            <span className={`flex-shrink-0 px-2 py-0.5 text-xs font-bold rounded-full whitespace-nowrap ${isDimmed
+                                                ? 'bg-slate-200 text-slate-500'
+                                                : 'bg-emerald-100 text-emerald-700'
                                                 }`}>
-                                                <div className="flex items-center gap-1 mb-1">
-                                                    <AlertTriangle className="w-3 h-3" />
-                                                    <span className="font-bold text-xs">申し送り</span>
-                                                    {appointment.isMemoResolved && (
-                                                        <span className="text-xs text-slate-400 ml-auto">解決済</span>
-                                                    )}
-                                                </div>
-                                                <p className={expandedMemos.has(appointment.id) ? '' : 'line-clamp-2'}>{appointment.adminMemo}</p>
-                                            </div>
-                                        )}
-                                        {/* 展開/縮小インジケータ */}
-                                        <div className="flex items-center justify-center mt-1 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {expandedMemos.has(appointment.id) ? (
-                                                <><ChevronUp className="w-3 h-3" /><span>縮小</span></>
-                                            ) : (
-                                                <><ChevronDown className="w-3 h-3" /><span>全文表示</span></>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </td>
-
-                            {/* 操作 */}
-                            <td className="px-4 py-4">
-                                <div className="flex items-center justify-end gap-2">
-                                    {appointment.status === 'cancelled' ? (
-                                        <>
-                                            <span className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-400 text-sm font-bold rounded-lg cursor-not-allowed">
-                                                <FileText className="w-4 h-4" />
-                                                記録
+                                                {appointment.visitCount}回目
                                             </span>
-                                            <button
-                                                disabled
-                                                className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-400 text-sm font-medium rounded-lg border border-slate-200 cursor-not-allowed"
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                                編集
-                                            </button>
-                                            <button
-                                                disabled
-                                                className="p-1.5 text-slate-300 rounded-lg cursor-not-allowed"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </>
+                                        )}
+                                    </div>
+                                    <div className="text-sm text-slate-500 truncate">
+                                        {appointment.patientKana}
+                                    </div>
+                                </td>
+
+                                {/* 担当者 */}
+                                <td className="px-4 py-4">
+                                    {appointment.staffName ? (
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                            <span className="text-sm text-slate-700 truncate" title={appointment.staffName}>
+                                                {appointment.staffName}
+                                            </span>
+                                        </div>
                                     ) : (
-                                        <>
-                                            <Link
-                                                href={`/customers/${appointment.patientId}`}
-                                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors"
-                                            >
-                                                <FileText className="w-4 h-4" />
-                                                記録
-                                            </Link>
-                                            <button
-                                                onClick={() => onEdit(appointment.id)}
-                                                className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg border border-slate-200 transition-colors"
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                                編集
-                                            </button>
-                                            <button
-                                                onClick={() => onDelete(appointment.id)}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </>
+                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full animate-pulse whitespace-nowrap">
+                                            未割り当て
+                                        </span>
                                     )}
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
+                                </td>
+
+                                {/* メモ */}
+                                <td className="px-4 py-4 max-w-xs">
+                                    <div className="flex flex-col gap-2 items-start">
+                                        {/* 申し送りボタン */}
+                                        {appointment.adminMemo && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDialogState({ type: 'admin', appointment });
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-600 border border-rose-100 rounded-full hover:bg-rose-100 transition-colors shadow-sm"
+                                            >
+                                                <AlertTriangle className="w-3.5 h-3.5" />
+                                                <span className="text-xs font-bold">申し送りあり</span>
+                                            </button>
+                                        )}
+                                        {/* メモボタン (統一デザイン) */}
+                                        {appointment.memo && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDialogState({ type: 'memo', appointment });
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-full hover:bg-blue-100 transition-colors shadow-sm"
+                                            >
+                                                <FileTextIcon className="w-3.5 h-3.5" />
+                                                <span className="text-xs font-bold">メモあり</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+
+                                {/* 操作 */}
+                                <td className="px-4 py-4">
+                                    <div className="flex items-center justify-end gap-2">
+                                        {appointment.status === 'cancelled' ? (
+                                            <>
+                                                <span className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-400 text-sm font-bold rounded-lg cursor-not-allowed">
+                                                    <FileText className="w-4 h-4" />
+                                                    記録
+                                                </span>
+                                                <button
+                                                    disabled
+                                                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-400 text-sm font-medium rounded-lg border border-slate-200 cursor-not-allowed"
+                                                >
+                                                    <Edit3 className="w-4 h-4" />
+                                                    編集
+                                                </button>
+                                                <button
+                                                    disabled
+                                                    className="p-1.5 text-slate-300 rounded-lg cursor-not-allowed"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Link
+                                                    href={`/customers/${appointment.patientId}`}
+                                                    className={`flex items-center gap-1 px-3 py-1.5 text-sm font-bold rounded-lg transition-colors ${isDimmed
+                                                        ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                                        }`}
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    記録
+                                                </Link>
+                                                <button
+                                                    onClick={() => onEdit(appointment.id)}
+                                                    className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg border border-slate-200 transition-colors"
+                                                >
+                                                    <Edit3 className="w-4 h-4" />
+                                                    編集
+                                                </button>
+                                                <button
+                                                    onClick={() => onDelete(appointment.id)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
+
+            {/* Unified Memo Dialog */}
+            <Dialog open={!!dialogState} onOpenChange={(open) => !open && setDialogState(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className={`flex items-center gap-2 ${dialogState?.type === 'admin' ? 'text-rose-600' : 'text-blue-600'
+                            }`}>
+                            {dialogState?.type === 'admin' ? (
+                                <>
+                                    <AlertCircle className="w-5 h-5" />
+                                    申し送り事項
+                                </>
+                            ) : (
+                                <>
+                                    <FileTextIcon className="w-5 h-5" />
+                                    予約メモ
+                                </>
+                            )}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <div className="mb-4">
+                            <div className="text-sm text-slate-500 mb-1">対象のお客様</div>
+                            <div className="font-bold text-lg">{dialogState?.appointment.patientName} 様</div>
+                        </div>
+                        <div className={`p-4 rounded-lg border leading-relaxed whitespace-pre-wrap ${dialogState?.type === 'admin'
+                            ? 'bg-rose-50 border-rose-100 text-rose-800'
+                            : 'bg-blue-50 border-blue-100 text-blue-800'
+                            }`}>
+                            {dialogState?.type === 'admin'
+                                ? dialogState.appointment.adminMemo
+                                : dialogState?.appointment.memo
+                            }
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
