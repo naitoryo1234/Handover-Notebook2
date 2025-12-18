@@ -57,7 +57,7 @@ export default function Home() {
 
         {/* Reservation Notebook */}
         <Link
-          href="/reservation-notebook"
+          href="/reservation-v2"
           className="group relative bg-white/70 backdrop-blur-sm rounded-2xl border border-white/50 p-8 shadow-sm hover:shadow-2xl hover:bg-white/90 hover:scale-[1.02] hover:ring-2 hover:ring-emerald-500/20 transition-all duration-300 overflow-hidden min-h-[260px]"
         >
           <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:opacity-[0.1] transition-opacity duration-500 transform group-hover:scale-110 origin-top-right">

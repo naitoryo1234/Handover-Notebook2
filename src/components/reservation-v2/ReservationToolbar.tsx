@@ -2,7 +2,8 @@
 
 import { format, parseISO, isSameDay, addDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Search, ChevronLeft, ChevronRight, Plus, AlertCircle, UserX, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Plus, AlertCircle, UserX, X, PanelLeftClose, PanelLeftOpen, Home, Users, Calendar } from 'lucide-react';
+import Link from 'next/link';
 
 interface Staff {
     id: string;
@@ -32,6 +33,9 @@ interface ReservationToolbarProps {
     onUnassignedToggle: () => void;
     showUnresolvedOnly: boolean;
     onUnresolvedToggle: () => void;
+    displayedCount: number; // フィルタ後の実際の表示件数
+    isSidebarOpen: boolean;
+    onSidebarToggle: () => void;
 
     onNewReservation: () => void;
 }
@@ -53,6 +57,9 @@ export function ReservationToolbar({
     onUnassignedToggle,
     showUnresolvedOnly,
     onUnresolvedToggle,
+    displayedCount,
+    isSidebarOpen,
+    onSidebarToggle,
     onNewReservation
 }: ReservationToolbarProps) {
     const parsedDate = parseISO(currentDate);
@@ -110,7 +117,7 @@ export function ReservationToolbar({
                         <button
                             onClick={() => onViewModeChange('today')}
                             className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${viewMode === 'daily' && isCurrentToday
-                                ? 'bg-white text-indigo-600 shadow-sm'
+                                ? 'bg-white text-emerald-600 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
@@ -119,7 +126,7 @@ export function ReservationToolbar({
                         <button
                             onClick={() => onViewModeChange('tomorrow')}
                             className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${viewMode === 'daily' && isCurrentTomorrow
-                                ? 'bg-white text-indigo-600 shadow-sm'
+                                ? 'bg-white text-emerald-600 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
@@ -128,7 +135,7 @@ export function ReservationToolbar({
                         <button
                             onClick={() => onViewModeChange('all')}
                             className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${viewMode === 'all'
-                                ? 'bg-white text-indigo-600 shadow-sm'
+                                ? 'bg-white text-emerald-600 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
@@ -137,14 +144,53 @@ export function ReservationToolbar({
                     </div>
                 </div>
 
-                {/* 右: 新規予約 */}
-                <button
-                    onClick={onNewReservation}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-                >
-                    <Plus className="w-5 h-5" />
-                    <span>新規予約</span>
-                </button>
+                {/* 右側: ナビリンク(サイドバー閉時) + サイドバートグル + 新規予約 */}
+                <div className="flex items-center gap-2">
+                    {/* サイドバー閉時のみナビリンク表示 */}
+                    {!isSidebarOpen && (
+                        <div className="flex items-center gap-1 mr-2 bg-slate-100/50 p-1 rounded-lg">
+                            <Link
+                                href="/"
+                                className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-md transition-colors"
+                                title="ホーム"
+                            >
+                                <Home className="w-4 h-4" />
+                            </Link>
+                            <Link
+                                href="/customer-notebook"
+                                className="flex items-center justify-center p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-md transition-colors"
+                                title="Customer Notebook"
+                            >
+                                <Users className="w-4 h-4" />
+                            </Link>
+                            <Link
+                                href="/reservation-v2"
+                                className="flex items-center justify-center p-2 text-emerald-600 bg-emerald-50 rounded-md"
+                                title="Reservation Notebook"
+                            >
+                                <Calendar className="w-4 h-4" />
+                            </Link>
+                        </div>
+                    )}
+
+                    {/* サイドバートグルボタン */}
+                    <button
+                        onClick={onSidebarToggle}
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        title={isSidebarOpen ? 'サイドバーを閉じる' : 'サイドバーを開く'}
+                    >
+                        {isSidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
+                    </button>
+
+                    {/* 新規予約 */}
+                    <button
+                        onClick={onNewReservation}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                    >
+                        <Plus className="w-5 h-5" />
+                        <span>新規予約</span>
+                    </button>
+                </div>
             </div>
 
             {/* 下段: 検索 & フィルター */}
@@ -152,13 +198,13 @@ export function ReservationToolbar({
                 <div className="flex items-center gap-3">
                     {/* 検索 */}
                     <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
                             placeholder="お客様検索..."
-                            className="pl-9 pr-8 py-1.5 w-60 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="pl-9 pr-8 py-1.5 w-60 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                         />
                         {searchQuery && (
                             <button
@@ -176,7 +222,7 @@ export function ReservationToolbar({
                     <select
                         value={selectedStaffId}
                         onChange={(e) => onStaffChange(e.target.value)}
-                        className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer hover:border-indigo-300 transition-colors"
+                        className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer hover:border-emerald-300 transition-colors"
                     >
                         <option value="all">担当: 全員</option>
                         {staffList.map(staff => (
@@ -187,7 +233,7 @@ export function ReservationToolbar({
                     <button
                         onClick={() => onIncludePastChange(!includePast)}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${includePast
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                             }`}
                     >
@@ -230,7 +276,7 @@ export function ReservationToolbar({
 
                 {/* 件数 */}
                 <div className="text-sm font-medium text-slate-500">
-                    全 <span className="text-slate-900 text-lg font-bold tabular-nums">{stats.total}</span> 件
+                    全 <span className="text-slate-900 text-lg font-bold tabular-nums">{displayedCount}</span> 件
                 </div>
             </div>
         </div>

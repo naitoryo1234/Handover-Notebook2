@@ -39,7 +39,7 @@ export function GlobalNavigation() {
         },
         {
             name: 'Reservation Notebook',
-            href: '/reservation-notebook',
+            href: '/reservation-v2',
             icon: Calendar,
             colorClass: 'text-emerald-600',
             activeClass: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',

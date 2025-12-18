@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Calendar, ListTodo, Home } from 'lucide-react';
+import { Calendar, ListTodo, Home, Users } from 'lucide-react';
 
 interface SidebarContainerProps {
     children?: React.ReactNode;
@@ -32,13 +32,30 @@ export function SidebarContainer({ calendarContent, todayListContent }: SidebarC
                     </div>
                 </Link>
 
-                <Link
-                    href="/"
-                    className="flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors px-1"
-                >
-                    <Home className="w-4 h-4" />
-                    <span>ホームに戻る</span>
-                </Link>
+                {/* ナビゲーションリンク */}
+                <div className="flex flex-col gap-1 mt-2">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+                    >
+                        <Home className="w-4 h-4" />
+                        <span>ホーム</span>
+                    </Link>
+                    <Link
+                        href="/customer-notebook"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-md transition-colors"
+                    >
+                        <Users className="w-4 h-4" />
+                        <span>Customer Notebook</span>
+                    </Link>
+                    <Link
+                        href="/reservation-v2"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 rounded-md"
+                    >
+                        <Calendar className="w-4 h-4" />
+                        <span>Reservation Notebook</span>
+                    </Link>
+                </div>
             </div>
 
             {/* タブヘッダー */}
@@ -46,25 +63,25 @@ export function SidebarContainer({ calendarContent, todayListContent }: SidebarC
                 <button
                     onClick={() => setActiveTab('calendar')}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative
-                        ${activeTab === 'calendar' ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
+                        ${activeTab === 'calendar' ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
                     `}
                 >
                     <Calendar className="w-4 h-4" />
                     <span>カレンダー</span>
                     {activeTab === 'calendar' && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600" />
                     )}
                 </button>
                 <button
                     onClick={() => setActiveTab('today')}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors relative
-                        ${activeTab === 'today' ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
+                        ${activeTab === 'today' ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
                     `}
                 >
                     <ListTodo className="w-4 h-4" />
                     <span>本日の予定</span>
                     {activeTab === 'today' && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600" />
                     )}
                 </button>
             </div>

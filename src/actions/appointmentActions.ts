@@ -24,6 +24,7 @@ export async function scheduleAppointment(formData: FormData) {
         await createAppointment(patientId, startAt, memo, staffId || undefined, duration, adminMemo, operatorId || undefined);
         revalidatePath('/');
         revalidatePath('/reservation-notebook');
+        revalidatePath('/reservation-v2');
         revalidatePath(`/patients/${patientId}`);
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +39,8 @@ export async function cancelAppointmentAction(appointmentId: string) {
     try {
         await cancelAppointment(appointmentId);
         revalidatePath('/');
+        revalidatePath('/reservation-notebook');
+        revalidatePath('/reservation-v2');
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
@@ -116,6 +119,7 @@ export async function updateAppointmentAction(formData: FormData) {
         revalidatePath('/');
         revalidatePath('/appointments');
         revalidatePath('/reservation-notebook');
+        revalidatePath('/reservation-v2');
         return { success: true };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {

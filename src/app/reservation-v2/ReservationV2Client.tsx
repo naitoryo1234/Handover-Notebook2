@@ -5,6 +5,7 @@ import { format, addDays, parseISO } from 'date-fns';
 
 import { useRouter } from 'next/navigation';
 import { Appointment } from '@/services/appointmentServiceV2';
+import { cancelAppointmentAction } from '@/actions/appointmentActions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { ReservationToolbar } from '@/components/reservation-v2/ReservationToolbar';
 import { ReservationTable } from '@/components/reservation-v2/ReservationTable';
@@ -12,7 +13,8 @@ import { SearchStatusBar } from '@/components/reservation-v2/SearchStatusBar';
 import { MiniCalendar } from '@/components/reservation-v2/MiniCalendar';
 
 import { SidebarContainer } from '@/components/reservation-v2/SidebarContainer';
-import { ReservationModal } from '@/components/reservation-v2/ReservationModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ReservationModal, EditingAppointment } from '@/components/reservation-v2/ReservationModal';
 
 interface Staff {
     id: string;
@@ -69,6 +71,13 @@ export function ReservationV2Client({
 
     // Modal State
     const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+    const [editingAppointment, setEditingAppointment] = useState<EditingAppointment | null>(null);
+
+    // Sidebar State
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    // 削除確認モーダル State
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
     // フィルター適用済みかどうか
     const hasActiveFilters = searchQuery !== ''
@@ -169,21 +178,23 @@ export function ReservationV2Client({
     return (
         <div className="flex h-screen max-h-screen bg-slate-50 overflow-hidden">
             {/* サイドバー */}
-            <div className="w-[300px] flex-none h-full border-r border-slate-200 bg-white hidden lg:block z-20">
-                <SidebarContainer
-                    calendarContent={
-                        <MiniCalendar
-                            currentDate={currentDate}
-                            highlightSelected={viewMode === 'daily'}
-                            onDateSelect={(date) => {
-                                // カレンダーの日付を選択したらその日に移動し、単日モードへ
-                                setViewMode('daily');
-                                router.push(`/reservation-v2?date=${date}`);
-                            }}
-                        />
-                    }
-                />
-            </div>
+            {isSidebarOpen && (
+                <div className="w-[300px] flex-none h-full border-r border-slate-200 bg-white hidden lg:block z-20">
+                    <SidebarContainer
+                        calendarContent={
+                            <MiniCalendar
+                                currentDate={currentDate}
+                                highlightSelected={viewMode === 'daily'}
+                                onDateSelect={(date) => {
+                                    // カレンダーの日付を選択したらその日に移動し、単日モードへ
+                                    setViewMode('daily');
+                                    router.push(`/reservation-v2?date=${date}`);
+                                }}
+                            />
+                        }
+                    />
+                </div>
+            )}
 
             {/* メインコンテンツ (スクロール領域) */}
             <div className="flex-1 h-full overflow-y-auto min-w-0">
@@ -206,6 +217,9 @@ export function ReservationV2Client({
                         onUnassignedToggle={() => setShowUnassignedOnly(!showUnassignedOnly)}
                         showUnresolvedOnly={showUnresolvedOnly}
                         onUnresolvedToggle={() => setShowUnresolvedOnly(!showUnresolvedOnly)}
+                        displayedCount={filteredAppointments.length}
+                        isSidebarOpen={isSidebarOpen}
+                        onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
                         onNewReservation={() => setIsReservationModalOpen(true)}
                     />
 
@@ -227,18 +241,57 @@ export function ReservationV2Client({
                 {/* テーブル */}
                 <ReservationTable
                     appointments={filteredAppointments}
-                    onEdit={(id) => console.log('Edit', id)}
-                    onDelete={(id) => console.log('Delete', id)}
-                    onRecord={(id) => console.log('Record', id)}
+                    onEdit={(id) => {
+                        // 編集対象の予約を探す
+                        const target = filteredAppointments.find(a => a.id === id);
+                        if (target) {
+                            setEditingAppointment({
+                                id: target.id,
+                                patientId: target.patientId,
+                                patientName: target.patientName,
+                                patientKana: target.patientKana,
+                                visitDate: target.visitDate,
+                                duration: target.duration,
+                                staffId: target.staffId,
+                                memo: target.memo,
+                                adminMemo: target.adminMemo
+                            });
+                            setIsReservationModalOpen(true);
+                        }
+                    }}
+                    onDelete={(id) => setDeleteTargetId(id)}
                 />
             </div>
 
             <ReservationModal
                 isOpen={isReservationModalOpen}
-                onClose={() => setIsReservationModalOpen(false)}
+                onClose={() => {
+                    setIsReservationModalOpen(false);
+                    setEditingAppointment(null); // 閉じたら編集状態クリア
+                }}
                 staffList={staffList}
                 patients={patients}
                 initialDate={currentDate.split('T')[0]}
+                editingAppointment={editingAppointment}
+            />
+
+            {/* 削除確認ダイアログ */}
+            <ConfirmDialog
+                open={!!deleteTargetId}
+                onOpenChange={(open) => !open && setDeleteTargetId(null)}
+                title="予約のキャンセル"
+                description="この予約をキャンセル（削除）してもよろしいですか？この操作は取り消せません。"
+                confirmLabel="削除する"
+                variant="danger"
+                onConfirm={async () => {
+                    if (deleteTargetId) {
+                        const result = await cancelAppointmentAction(deleteTargetId);
+                        if (!result.success) {
+                            alert(result.message || '削除に失敗しました');
+                        }
+                        setDeleteTargetId(null);
+                    }
+                }}
             />
         </div>
 

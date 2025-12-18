@@ -18,7 +18,7 @@ export default async function ReservationV2Page({ searchParams }: PageProps) {
     const appointments = await getTodaysAppointments(targetDate);
 
     // 全予約も取得（過去含む場合用）
-    const allAppointments = await findAllAppointments({ includePast: true, includeCancelled: false });
+    const allAppointments = await findAllAppointments({ includePast: true, includeCancelled: true });
 
     // スタッフ一覧を取得
     const staffList = await prisma.staff.findMany({

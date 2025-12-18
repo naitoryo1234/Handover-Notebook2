@@ -5,9 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { scheduleAppointment } from '@/actions/appointmentActions';
+import { scheduleAppointment, updateAppointmentAction } from '@/actions/appointmentActions';
 import { format, addMinutes, parseISO, addDays, startOfHour } from 'date-fns';
-import { Loader2, Search, User, Calendar, Clock, X, Check, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Loader2, Search, User, Calendar, Clock, X, Check, AlertTriangle, AlertCircle, Edit3 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { ja } from 'date-fns/locale';
 
@@ -23,12 +23,27 @@ interface Staff {
     name: string;
 }
 
+// 編集時に渡される予約データ
+export interface EditingAppointment {
+    id: string;
+    patientId: string;
+    patientName: string;
+    patientKana: string;
+    pId?: number;
+    visitDate: Date;
+    duration: number;
+    staffId?: string;
+    memo?: string;
+    adminMemo?: string;
+}
+
 interface ReservationModalProps {
     isOpen: boolean;
     onClose: () => void;
     staffList: Staff[];
     patients: Patient[]; // 全患者リスト (クライアント検索用)
     initialDate?: string; // yyyy-MM-dd
+    editingAppointment?: EditingAppointment | null; // 編集時に渡す
 }
 
 const toKatakana = (str: string) => {
@@ -43,8 +58,10 @@ export function ReservationModal({
     onClose,
     staffList,
     patients,
-    initialDate
+    initialDate,
+    editingAppointment
 }: ReservationModalProps) {
+    const isEditMode = !!editingAppointment;
     const [step, setStep] = useState<'input' | 'confirm'>('input');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -75,25 +92,42 @@ export function ReservationModal({
         ).slice(0, 5); // 上位5件のみ表示（高さを抑えるため）
     }, [debouncedQuery, patients]);
 
-    // Reset form when opened
+    // Reset form when opened (新規/編集で分岐)
     useEffect(() => {
         if (isOpen) {
             setStep('input');
             setSearchQuery('');
-            setSelectedPatient(null);
-            setVisitDate(initialDate || format(new Date(), 'yyyy-MM-dd'));
-            // 時間を現在時刻に近い切りの良い時間に設定（例：10:00）
-            const now = new Date();
-            const nextHour = startOfHour(addMinutes(now, 60));
-            setVisitTime(format(nextHour, 'HH:mm'));
-
-            setMemo('');
-            setAdminMemo('');
-            setStaffId('');
             setIsSubmitting(false);
             setError('');
+
+            if (editingAppointment) {
+                // 編集モード: 既存データをセット
+                setSelectedPatient({
+                    id: editingAppointment.patientId,
+                    name: editingAppointment.patientName,
+                    kana: editingAppointment.patientKana,
+                    pId: editingAppointment.pId || 0
+                });
+                setVisitDate(format(new Date(editingAppointment.visitDate), 'yyyy-MM-dd'));
+                setVisitTime(format(new Date(editingAppointment.visitDate), 'HH:mm'));
+                setDuration(String(editingAppointment.duration || 60));
+                setStaffId(editingAppointment.staffId || '');
+                setMemo(editingAppointment.memo || '');
+                setAdminMemo(editingAppointment.adminMemo || '');
+            } else {
+                // 新規モード: リセット
+                setSelectedPatient(null);
+                setVisitDate(initialDate || format(new Date(), 'yyyy-MM-dd'));
+                const now = new Date();
+                const nextHour = startOfHour(addMinutes(now, 60));
+                setVisitTime(format(nextHour, 'HH:mm'));
+                setDuration('60');
+                setMemo('');
+                setAdminMemo('');
+                setStaffId('');
+            }
         }
-    }, [isOpen, initialDate]);
+    }, [isOpen, initialDate, editingAppointment]);
 
     // 日付操作ヘルパー
     const setQuickDate = (type: 'today' | 'tomorrow' | 'nextWeek') => {
@@ -119,20 +153,30 @@ export function ReservationModal({
         setError('');
 
         const formData = new FormData();
-        formData.append('patientId', selectedPatient.id);
         formData.append('visitDate', visitDate);
         formData.append('visitTime', visitTime);
         formData.append('duration', duration);
-        if (staffId) formData.append('staffId', staffId);
-        if (memo) formData.append('memo', memo);
-        if (adminMemo) formData.append('adminMemo', adminMemo);
+        // staffIdが空文字の場合も送信（未割り当てに更新するため）
+        formData.append('staffId', staffId);
+        formData.append('memo', memo);
+        formData.append('adminMemo', adminMemo);
 
         try {
-            const result = await scheduleAppointment(formData);
+            let result;
+            if (isEditMode && editingAppointment) {
+                // 編集モード
+                formData.append('id', editingAppointment.id);
+                result = await updateAppointmentAction(formData);
+            } else {
+                // 新規作成モード
+                formData.append('patientId', selectedPatient.id);
+                result = await scheduleAppointment(formData);
+            }
+
             if (result.success) {
                 onClose();
             } else {
-                setError(result.message || '予約の作成に失敗しました');
+                setError(result.message || (isEditMode ? '予約の更新に失敗しました' : '予約の作成に失敗しました'));
             }
         } catch (err) {
             setError('エラーが発生しました');
@@ -162,8 +206,11 @@ export function ReservationModal({
         <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
             <DialogContent className="sm:max-w-5xl w-[95vw] h-[90vh] p-0 overflow-hidden flex flex-col">
                 <DialogHeader className="px-6 py-3 border-b border-slate-100 flex-shrink-0">
-                    <DialogTitle className="text-xl text-slate-800">
-                        {step === 'input' ? '新規予約を作成' : '予約内容の確認'}
+                    <DialogTitle className="text-xl text-slate-800 flex items-center gap-2">
+                        {isEditMode && <Edit3 className="w-5 h-5 text-emerald-600" />}
+                        {step === 'input'
+                            ? (isEditMode ? '予約を編集' : '新規予約を作成')
+                            : '予約内容の確認'}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -190,13 +237,13 @@ export function ReservationModal({
                                             <Search className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                                             <Input
                                                 placeholder="名前、カナ、No.で検索..."
-                                                className="pl-10 h-11 bg-white border-slate-200 focus:border-indigo-500 text-base"
+                                                className="pl-10 h-11 bg-white border-slate-200 focus-visible:ring-emerald-500 focus:border-emerald-500 text-base"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                             />
-                                            {/* 検索結果ドロップダウン */}
+                                            {/* 検索結果ドロップダウン - 右詰めでIME回避 */}
                                             {searchQuery && filteredPatients.length > 0 && (
-                                                <div className="absolute top-12 right-0 left-auto w-[400px] bg-white shadow-xl rounded-lg border border-slate-100 z-[100] overflow-hidden">
+                                                <div className="absolute top-12 right-0 w-[320px] bg-white shadow-xl rounded-lg border border-slate-100 z-[100] overflow-hidden">
                                                     {filteredPatients.map(patient => (
                                                         <button
                                                             key={patient.id}
@@ -204,16 +251,16 @@ export function ReservationModal({
                                                                 setSelectedPatient(patient);
                                                                 setSearchQuery('');
                                                             }}
-                                                            className="w-full text-left p-3 hover:bg-slate-50 border-b last:border-0 border-slate-50 transition-colors flex justify-between items-center group"
+                                                            className="w-full text-right p-3 hover:bg-emerald-50 border-b last:border-0 border-slate-50 transition-colors flex flex-row-reverse justify-between items-center group"
                                                         >
                                                             <div>
                                                                 <div className="font-bold text-slate-800">{patient.name}</div>
-                                                                <div className="text-xs text-slate-500 flex gap-2">
-                                                                    <span>{patient.kana}</span>
+                                                                <div className="text-xs text-slate-500 flex justify-end gap-2">
                                                                     <span className="bg-slate-100 px-1.5 rounded text-slate-600">No.{patient.pId}</span>
+                                                                    <span>{patient.kana}</span>
                                                                 </div>
                                                             </div>
-                                                            <User className="w-4 h-4 text-slate-300 group-hover:text-indigo-500" />
+                                                            <User className="w-4 h-4 text-slate-300 group-hover:text-emerald-500" />
                                                         </button>
                                                     ))}
                                                 </div>
@@ -254,7 +301,7 @@ export function ReservationModal({
                                         <div className="relative">
                                             <Input
                                                 type="date"
-                                                className="h-11 bg-white border-slate-200 pr-10"
+                                                className="h-11 bg-white border-slate-200 pr-10 focus-visible:ring-emerald-500 focus:border-emerald-500"
                                                 value={visitDate}
                                                 onChange={(e) => setVisitDate(e.target.value)}
                                             />
@@ -262,12 +309,12 @@ export function ReservationModal({
                                         <div className="flex gap-2">
                                             <Input
                                                 type="time"
-                                                className="h-11 bg-white border-slate-200 flex-1"
+                                                className="h-11 bg-white border-slate-200 flex-1 focus-visible:ring-emerald-500 focus:border-emerald-500"
                                                 value={visitTime}
                                                 onChange={(e) => setVisitTime(e.target.value)}
                                             />
                                             <select
-                                                className="h-11 px-3 border border-slate-200 rounded-md bg-white text-slate-800 min-w-[100px]"
+                                                className="h-11 px-3 border border-slate-200 rounded-md bg-white text-slate-800 min-w-[100px] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                                                 value={duration}
                                                 onChange={(e) => setDuration(e.target.value)}
                                             >
@@ -287,9 +334,9 @@ export function ReservationModal({
                                             </div>
                                             <div className="w-px h-4 bg-slate-200 mx-1"></div>
                                             <div className="flex gap-1">
-                                                <Button variant="outline" size="sm" className="h-8 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" onClick={() => addTime(15)}>+15分</Button>
-                                                <Button variant="outline" size="sm" className="h-8 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" onClick={() => addTime(30)}>+30分</Button>
-                                                <Button variant="outline" size="sm" className="h-8 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" onClick={() => addTime(60)}>+60分</Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-100" onClick={() => addTime(15)}>+15分</Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-100" onClick={() => addTime(30)}>+30分</Button>
+                                                <Button variant="outline" size="sm" className="h-8 text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-100" onClick={() => addTime(60)}>+60分</Button>
                                             </div>
                                         </div>
                                     </div>
@@ -299,7 +346,7 @@ export function ReservationModal({
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-slate-700">担当者</label>
                                     <select
-                                        className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-slate-800"
+                                        className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                                         value={staffId}
                                         onChange={(e) => setStaffId(e.target.value)}
                                     >
@@ -321,7 +368,7 @@ export function ReservationModal({
                                     </div>
                                     <Textarea
                                         placeholder="患者様からの要望など"
-                                        className="min-h-[100px] bg-white border-slate-200 resize-none"
+                                        className="min-h-[100px] bg-white border-slate-200 resize-none focus-visible:ring-emerald-500 focus:border-emerald-500"
                                         value={memo}
                                         onChange={(e) => setMemo(e.target.value)}
                                     />
@@ -336,7 +383,7 @@ export function ReservationModal({
 
                                     <Textarea
                                         placeholder="例: 前回施術後に赤みが出たため注意"
-                                        className="min-h-[80px] bg-white border-red-100 focus:border-red-300 resize-none placeholder:text-red-200 text-red-800"
+                                        className="min-h-[80px] bg-white border-red-100 focus:border-red-300 resize-none placeholder:text-red-200 text-red-800 focus-visible:ring-red-300"
                                         value={adminMemo}
                                         onChange={(e) => setAdminMemo(e.target.value)}
                                     />
@@ -347,7 +394,7 @@ export function ReservationModal({
                                     <Button variant="ghost" onClick={onClose} className="font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100">キャンセル</Button>
                                     <Button
                                         onClick={handleConfirmCheck}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 shadow-md shadow-indigo-200"
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 shadow-md shadow-emerald-200"
                                     >
                                         確認画面へ
                                     </Button>
@@ -435,7 +482,7 @@ export function ReservationModal({
                                     <Button
                                         onClick={handleSubmit}
                                         disabled={isSubmitting}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 shadow-md shadow-indigo-200"
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 shadow-md shadow-emerald-200"
                                     >
                                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         確定する

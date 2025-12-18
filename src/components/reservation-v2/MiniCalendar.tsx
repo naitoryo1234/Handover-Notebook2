@@ -78,12 +78,12 @@ export function MiniCalendar({ currentDate, onDateSelect, highlightSelected = tr
                                 className={`
                                     w-8 h-8 flex items-center justify-center text-sm rounded-md transition-all
                                     ${isSelected
-                                        ? 'bg-slate-900 text-white shadow-md'
-                                        : 'hover:bg-slate-100'
+                                        ? 'bg-emerald-600 text-white shadow-md font-bold'
+                                        : 'hover:bg-emerald-50'
                                     }
                                     ${!isSelected && !isCurrentMonth ? 'text-slate-300' : ''}
                                     ${!isSelected && isCurrentMonth ? 'text-slate-700' : ''}
-                                    ${!isSelected && isToday ? 'font-bold text-indigo-600' : ''}
+                                    ${!isSelected && isToday ? 'font-bold text-emerald-600 bg-emerald-50/50' : ''}
                                 `}
                             >
                                 {format(day, 'd')}
@@ -92,6 +92,6 @@ export function MiniCalendar({ currentDate, onDateSelect, highlightSelected = tr
                     );
                 })}
             </div>
-        </div>
+        </div >
     );
 }
