@@ -524,7 +524,7 @@ export const cancelCheckIn = async (id: string) => {
     return await prisma.appointment.update({
         where: { id },
         data: {
-            status: 'pending', // Revert to meaningful default
+            status: 'scheduled', // UIがscheduledでチェックインボタンを表示するため
             arrivedAt: null
         }
     });
