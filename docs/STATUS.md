@@ -1,32 +1,37 @@
 # Project Status
 
-最終更新: 2025-12-18 23:08
+最終更新: 2025-12-19 00:55
 
 ---
 
 ## 🎯 Current Phase
 
-**Phase 8: Reservation V2 完成 → ユースケースチェックフェーズへ移行**
+**Phase 8: Reservation V2 完成 → 実装チェックリスト消化フェーズ**
 
 ---
 
 ## ✅ Completed (今回のセッション)
 
-- [x] **RNV2 サイドバー「本日の予定」リスト**
-  - `TodayAppointmentsList.tsx` を新規作成
-  - 当日の予約カード表示（ステータスバッジ付き）
-  - 過去予約の薄表示（視覚的優先度調整）
-  - アラートストリップ（担当未定/申し送り件数）
-  - カードクリックで顧客名フィルター
+- [x] **JST タイムゾーン対応**
+  - `date-fns-tz` を導入
+  - `lib/dateUtils.ts` に `startOfDayJST`, `endOfDayJST`, `formatJST` 関数を追加
+  - サーバー(UTC)とクライアント(JST)の日付境界ずれを解消
+  - `appointmentServiceV2.ts` のクエリをJST基準に修正
 
-- [x] **UIの統一とバッジ化**
-  - 「担当未定」→「未割り当て」バッジに変更
-  - メモ・申し送り表示をバッジ+ダイアログ形式に統一
-  - `ReservationTable.tsx` と `TodayAppointmentsList.tsx` で共通パターン
+- [x] **チェックイン/完了のUndoボタン実装**
+  - Toast通知に「元に戻す」リンクを追加
+  - `cancelCheckIn` → `scheduled` ステータスに修正（ボタン消失バグ修正）
 
-- [x] **新規コンポーネント**
-  - `src/components/ui/badge.tsx`
-  - `docs/troubleshooting/DB_CONNECTION_ERRORS.md`
+- [x] **キャンセル済み予約のボタン統一**
+  - アイコンのみ表示（テキスト削除）
+  - ボタンサイズを `p-2` に統一
+
+- [x] **SaaS開発ナレッジ蓄積フォルダ作成**
+  - `docs/saas-pitfalls/` フォルダを新規作成
+  - `TIMEZONE.md` にタイムゾーン問題の詳細記録
+
+- [x] **12月19日サンプルデータ追加**
+  - `prisma/seed-dec19.ts` で様々なパターンの予約を追加
 
 ---
 
@@ -34,23 +39,23 @@
 
 | タスク | 進捗 | 備考 |
 |:---|:---|:---|
-| RNV2 ユースケースチェック | 開始待ち | 次回セッションで着手 |
+| RNV2 実装チェックリスト消化 | 次回着手 | P1から順に実装 |
 
 ---
 
 ## 📋 Next Up (次回のセッション)
 
-### P0 (Must)
-1. **RNV2 全体チェック**: さまざまなユースケースを想定した機能洗い出し
-2. **必要機能の実装**: チェック結果に基づく優先順位付けと実装
+### P1 (Should - SaaS品質向上)
+1. **申し送り解決マーク**: 解決済みボタン、解決者名・日時記録
+2. **カレンダー選択と全期間モードの排他制御**: UIの一貫性向上
 
-### P1 (Should)
-1. V1 の完全削除検討
-2. デバッグ・細かい改善（実運用を想定した微調整）
+### P2 (Nice to Have)
+- キーボードショートカット (N: 新規予約, T: 今日)
+- 印刷機能 (`@media print`)
+- モバイル最適化
 
-### P2 (Could)
-1. ESLint `react-hooks/set-state-in-effect` ルールの根本対応
-2. Reservation V2 のモバイル対応
+### 参照ドキュメント
+- `docs/rnv2-checklist/RNV2_IMPLEMENTATION_CHECKLIST.md`
 
 ---
 
@@ -58,7 +63,7 @@
 
 | 問題 | 影響度 | 回避策 |
 |:---|:---|:---|
-| ESLint `react-hooks/set-state-in-effect` | 中 | `--no-verify` でコミット中。ルール調整 or リファクタリング要 |
+| ESLint `react-hooks/set-state-in-effect` | 中 | `--no-verify` でコミット中 |
 
 ---
 
@@ -68,24 +73,23 @@
 - **DB状態**: Vercel Postgres (Neon) 接続済み
 - **認証**: NextAuth.js v5 + Credentials Provider
 - **ブランチ**: `feature/reservation-v2`
-- **開発サーバー**: `npm run dev` 実行中
+- **開発サーバー**: `npm run dev`
 
 ---
 
 ## 📝 Session Handover Notes
 
 ### コンテキスト
-RNV2 サイドバー「本日の予定」機能と、メモ・申し送りのバッジ+ダイアログ統一を完了。UIの一貫性が大幅に向上。
+JSTタイムゾーン対応完了。Vercel(UTC)環境でも日本時間基準で正しく動作するようになった。
 
 ### 決定事項
-- メモは長さに関わらずバッジ表示 + クリックでダイアログ（カード高さ統一）
-- 「中定」→「未割り当て」バッジでスタイル統一
-- サイドバーとテーブルで同一の操作パターン
+- `date-fns-tz` を使用しJSTを明示的に指定
+- 問題発生時のナレッジを `docs/saas-pitfalls/` に蓄積する運用開始
+- 実装完了後に包括的テストチェックリストを作成・実行する方針
 
 ### 次回の着手点
-1. **RNV2 全体チェック**: さまざまなユースケースを想定しながら隅々までチェック
-2. **必要機能の洗い出し**: チェック結果から優先順位を付けて実装計画を策定
+1. `docs/rnv2-checklist/RNV2_IMPLEMENTATION_CHECKLIST.md` のP1タスクから順に実装
+2. 申し送り解決マーク機能の実装
 
 ### 保留事項
 - ESLint `react-hooks/set-state-in-effect` ルールへの対応
-- `ReservationNotebookClient.tsx` の useEffect リファクタリング

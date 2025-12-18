@@ -557,8 +557,44 @@ GEMINI_API_KEY=your_api_key_here
 
 ## 次回予定
 
-1. **RNV2 全体チェック**: さまざまなユースケースを想定した機能洗い出し
-2. **必要機能の実装**: チェック結果に基づく優先順位付けと実装
-3. **V1 の完全削除検討**: タイミングを見て `/reservation-notebook` を削除
+1. **RNV2 実装チェックリスト消化**: `docs/rnv2-checklist/RNV2_IMPLEMENTATION_CHECKLIST.md` のP1から順に
+2. **申し送り解決マーク機能の実装**
+3. **カレンダー選択と全期間モードの排他制御**
 4. **ESLint ルール調整**: `react-hooks/set-state-in-effect` エラーの根本対応
 
+
+## v2.4.0 (2025-12-19)
+
+### 変更内容
+- **JST タイムゾーン対応**
+  - `date-fns-tz` パッケージを導入
+  - `lib/dateUtils.ts` に `startOfDayJST`, `endOfDayJST`, `formatJST` 関数を追加
+  - サーバー(UTC)とクライアント(JST)の日付境界ずれを解消
+  - `appointmentServiceV2.ts` のクエリをJST基準に修正
+  - 深夜0時〜9時（JST）でも正しく「今日」を判定
+
+- **チェックイン/完了のUndoボタン実装**
+  - Toast通知に「元に戻す」リンクを追加
+  - チェックイン/完了の誤操作を即座に取り消し可能
+
+- **バグ修正**
+  - `cancelCheckIn` が `pending` ではなく `scheduled` を返すよう修正
+  - Undo後にチェックインボタンが消える問題を解消
+
+- **キャンセル済み予約のボタン統一**
+  - テキストを削除しアイコンのみ表示
+  - ボタンサイズを `p-2` に統一
+
+- **SaaS開発ナレッジ蓄積フォルダ**
+  - `docs/saas-pitfalls/` フォルダを新規作成
+  - `TIMEZONE.md` にタイムゾーン問題の詳細記録
+
+- **開発補助**
+  - `prisma/seed-dec19.ts` で12月19日の様々なパターンの予約を追加
+
+### 変更の背景
+- Vercel(UTC)とブラウザ(JST)の時差により、深夜にデータ表示がずれる問題が発覚
+- `date-fns-tz` で明示的にJSTを指定することで根本解決
+- SaaS開発で遭遇した「落とし穴」を蓄積し、将来のプロジェクトで再発防止
+
+---
