@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Check, Circle, Ban, User, Edit3, Trash2, FileText, AlertTriangle, ChevronDown, ChevronUp, AlertCircle, FileText as FileTextIcon } from 'lucide-react';
+import { Check, Circle, Ban, User, Edit3, Trash2, FileText, AlertTriangle, ChevronDown, ChevronUp, AlertCircle, FileText as FileTextIcon, LogIn, CheckCircle2 } from 'lucide-react';
 import { Appointment } from '@/services/appointmentServiceV2';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,6 +12,8 @@ interface ReservationTableProps {
     appointments: Appointment[];
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
+    onCheckIn?: (id: string) => void;
+    onComplete?: (id: string) => void;
 }
 
 type DialogState = {
@@ -19,7 +21,7 @@ type DialogState = {
     appointment: Appointment;
 } | null;
 
-export function ReservationTable({ appointments, onEdit, onDelete }: ReservationTableProps) {
+export function ReservationTable({ appointments, onEdit, onDelete, onCheckIn, onComplete }: ReservationTableProps) {
     // 申し送り・メモダイアログ用
     const [dialogState, setDialogState] = useState<DialogState>(null);
 
@@ -186,8 +188,42 @@ export function ReservationTable({ appointments, onEdit, onDelete }: Reservation
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </>
+                                        ) : appointment.status === 'completed' ? (
+                                            // 完了済み: 操作ボタンをグレーアウト
+                                            <>
+                                                <span className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-500 text-sm font-bold rounded-lg">
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    完了
+                                                </span>
+                                                <Link
+                                                    href={`/customers/${appointment.patientId}`}
+                                                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-600 hover:bg-slate-300 text-sm font-bold rounded-lg transition-colors"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    記録
+                                                </Link>
+                                            </>
                                         ) : (
                                             <>
+                                                {/* ステータス遷移ボタン */}
+                                                {appointment.status === 'scheduled' && onCheckIn && (
+                                                    <button
+                                                        onClick={() => onCheckIn(appointment.id)}
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                                                    >
+                                                        <LogIn className="w-4 h-4" />
+                                                        チェックイン
+                                                    </button>
+                                                )}
+                                                {appointment.status === 'arrived' && onComplete && (
+                                                    <button
+                                                        onClick={() => onComplete(appointment.id)}
+                                                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                                                    >
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                        完了
+                                                    </button>
+                                                )}
                                                 <Link
                                                     href={`/customers/${appointment.patientId}`}
                                                     className={`flex items-center gap-1 px-3 py-1.5 text-sm font-bold rounded-lg transition-colors ${isDimmed
