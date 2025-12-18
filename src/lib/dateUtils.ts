@@ -18,8 +18,9 @@
  * - `getDemoDateString()`: DEMO 日付の文字列 (表示用)
  */
 
-import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
-import { startOfDay, endOfDay } from 'date-fns';
+
+import { formatInTimeZone } from 'date-fns-tz';
+
 
 // タイムゾーン定義
 export const JST_TIMEZONE = 'Asia/Tokyo';
@@ -72,13 +73,11 @@ export function getToday(): Date {
  * @returns JSTの00:00:00に相当するUTC時刻のDateオブジェクト
  */
 export function startOfDayJST(date: Date): Date {
-    // まずJSTとして解釈した日付を取得
-    const zonedDate = toZonedTime(date, JST_TIMEZONE);
-    // その日の開始時刻を取得
-    const startOfZonedDay = startOfDay(zonedDate);
-    // UTCに戻す（実際にはJSTのオフセット分ずれたUTC時刻になる）
-    // これでPrismaクエリでも正しく比較できる
-    return new Date(startOfZonedDay.getTime() - 9 * 60 * 60 * 1000); // JST -> UTC
+    // 1. 入力日付をJST表示として解釈した場合の年月日を取得
+    const jstDateStr = formatInTimeZone(date, JST_TIMEZONE, 'yyyy-MM-dd');
+    // 2. その日付のJST 00:00:00をUTCのDateオブジェクトとして返す
+    //    例: "2025-12-19" → 2025-12-19T00:00:00+09:00 → 2025-12-18T15:00:00Z
+    return new Date(`${jstDateStr}T00:00:00+09:00`);
 }
 
 /**
@@ -88,9 +87,9 @@ export function startOfDayJST(date: Date): Date {
  * @returns JSTの23:59:59.999に相当するUTC時刻のDateオブジェクト
  */
 export function endOfDayJST(date: Date): Date {
-    const zonedDate = toZonedTime(date, JST_TIMEZONE);
-    const endOfZonedDay = endOfDay(zonedDate);
-    return new Date(endOfZonedDay.getTime() - 9 * 60 * 60 * 1000); // JST -> UTC
+    const jstDateStr = formatInTimeZone(date, JST_TIMEZONE, 'yyyy-MM-dd');
+    // その日付のJST 23:59:59.999をUTCのDateオブジェクトとして返す
+    return new Date(`${jstDateStr}T23:59:59.999+09:00`);
 }
 
 /**
