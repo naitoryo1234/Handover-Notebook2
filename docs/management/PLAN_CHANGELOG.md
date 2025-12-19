@@ -4,6 +4,48 @@
 
 ---
 
+## v2.9.0 (2025-12-19)
+
+### 変更内容
+
+- **クイック記録機能（Customer Notebook）**
+  - 顧客一覧ページに「クイック記録」ボタン追加
+  - 音声入力 → AI顧客名抽出 → 顧客マッチング → 確認 → 保存の全フロー実装
+  - `QuickRecordModal.tsx` 新規作成
+  - `CustomerNotebookToolbar.tsx` 新規作成
+  - 確認画面で記録内容を編集可能に
+  - 複数候補時に直近来店日で区別可能なUI
+
+- **AI整形プロンプト強化**
+  - 鍼灸院デモ向けに`geminiActions.ts`を最適化
+  - 抽出項目拡充: body_parts（施術部位）, next_visit（次回来院）, cautions（禁忌事項）
+  - Few-shot例追加（禁忌ありケース）
+  - 【重要（禁忌事項）】形式での強調出力
+
+- **PC版音声コマンド対応（Reservation V2）**
+  - `ReservationToolbar.tsx`にPC版マイクボタン追加
+  - 検索バー横に配置、モバイル版と同じ`parseVoiceCommand`連携
+
+- **音声コマンドバグ修正**
+  - `applyVoiceCommand`の冒頭で全フィルターをクリアするよう修正
+  - 連続で音声入力しても前回の条件が残らない
+
+- **顧客選択UI改善**
+  - `searchPatientsForSelect`に`lastVisit`と`lastVisitType`を追加
+  - 同姓顧客の区別のため直近来店日を表示
+  - 予約（📅）/記録（📄）アイコンで来店種別を表示
+
+- **ドキュメント**
+  - `docs/management/IDEAS.md`: 業態プリセット対応、音声入力PRDの必要性を記録
+  - `docs/demo/VOICE_INPUT_TEST_SCRIPT.md`: 音声入力テスト台本作成
+
+### 変更の背景
+- 「今日来た山田さんは...」と話すだけで、顧客ページに行かずにメモを追加できる「クイック記録」機能を実装
+- 同姓の顧客がいる場合でも、直近来店日で区別できるように改善
+- AIプロンプトと入力フォームの連携は将来のPRD作成項目として記録
+
+---
+
 ## v2.8.0 (2025-12-19)
 
 ### 変更内容
