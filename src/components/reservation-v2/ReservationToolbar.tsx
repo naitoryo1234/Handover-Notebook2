@@ -26,6 +26,7 @@ import {
 import { MobileVoiceInput } from '@/components/mobile/MobileVoiceInput';
 import Link from 'next/link';
 import { Stats } from '@/app/reservation-v2/ReservationV2Client';
+import { VoiceCommandResult, parseVoiceCommand } from '@/actions/voiceCommandActions';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Button } from '@/components/ui/button';
 
@@ -51,6 +52,7 @@ interface ReservationToolbarProps {
     isSidebarOpen: boolean;
     onSidebarToggle: () => void;
     onNewReservation: () => void;
+    onVoiceCommand?: (result: VoiceCommandResult) => void;
 }
 
 export function ReservationToolbar({
@@ -74,7 +76,8 @@ export function ReservationToolbar({
     displayedCount,
     isSidebarOpen,
     onSidebarToggle,
-    onNewReservation
+    onNewReservation,
+    onVoiceCommand
 }: ReservationToolbarProps) {
     const parsedDate = parseISO(currentDate);
     const isCurrentToday = format(new Date(), 'yyyy-MM-dd') === currentDate;
@@ -132,7 +135,21 @@ export function ReservationToolbar({
                         />
                         <div className="absolute right-2 top-1/2 -translate-y-1/2">
                             <MobileVoiceInput
-                                onCommit={(text) => onSearchChange(text)}
+                                onCommit={async (text) => {
+                                    // 音声コマンド解析を呼び出し
+                                    if (onVoiceCommand) {
+                                        const result = await parseVoiceCommand(text);
+                                        if (result.success && result.data) {
+                                            onVoiceCommand(result.data);
+                                        } else {
+                                            // 解析失敗時はそのまま検索
+                                            onSearchChange(text);
+                                        }
+                                    } else {
+                                        // フォールバック: 従来の検索
+                                        onSearchChange(text);
+                                    }
+                                }}
                                 trigger={
                                     <button className="p-1.5 text-slate-400 hover:text-emerald-500 rounded-full active:bg-slate-200 transition-colors">
                                         <Mic className="w-4 h-4" />

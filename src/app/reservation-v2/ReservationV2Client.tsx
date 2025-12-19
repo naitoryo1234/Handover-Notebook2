@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format, addDays, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
 import { useRouter } from 'next/navigation';
 import { Appointment } from '@/services/appointmentServiceV2';
 import { cancelAppointmentAction, checkInAppointmentAction, completeAppointmentAction, cancelCheckInAction, undoAppointmentStatusAction } from '@/actions/appointmentActions';
+import { VoiceCommandResult } from '@/actions/voiceCommandActions';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { ReservationToolbar } from '@/components/reservation-v2/ReservationToolbar';
@@ -213,6 +214,46 @@ export function ReservationV2Client({
         }
     };
 
+    // 音声コマンド適用ハンドラ
+    const applyVoiceCommand = useCallback((result: VoiceCommandResult) => {
+        // 名前検索
+        if (result.name) {
+            setSearchQuery(result.name);
+            // 名前検索時は全期間・過去込みで検索
+            if (viewMode !== 'all') setViewMode('all');
+            if (!includePast) setIncludePast(true);
+            toast.success(`"${result.name}" で検索`, { duration: 2000 });
+        }
+
+        // 日付フィルター（名前と併用可能）
+        if (result.date) {
+            setViewMode('daily');
+            router.push(`/reservation-v2?date=${result.date}`);
+            if (!result.name) {
+                toast.success(`${result.date} の予約を表示`, { duration: 2000 });
+            }
+        }
+
+        // 全期間表示（名前も日付もない場合）
+        if (result.period === 'all' && !result.name && !result.date) {
+            setViewMode('all');
+            toast.success('全期間の予約を表示', { duration: 2000 });
+        }
+
+        // 解析失敗時はそのままテキスト検索
+        if (!result.name && !result.date && !result.period) {
+            // 敬称を除去して検索（フォールバック）
+            const cleanedText = result.rawText
+                .replace(/さん|様|さま|くん|ちゃん/g, '')
+                .trim();
+            if (cleanedText) {
+                setSearchQuery(cleanedText);
+                if (viewMode !== 'all') setViewMode('all');
+                if (!includePast) setIncludePast(true);
+            }
+        }
+    }, [router, viewMode, includePast]);
+
     // 顧客選択ハンドラ (サイドバーからの遷移用)
     const handlePatientSelect = (patientName: string) => {
         handleSearchChange(patientName); // 共通ロジックを使用
@@ -306,6 +347,7 @@ export function ReservationV2Client({
                         isSidebarOpen={isSidebarOpen}
                         onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
                         onNewReservation={() => setIsReservationModalOpen(true)}
+                        onVoiceCommand={applyVoiceCommand}
                     />
                     {hasActiveFilters && (
                         <SearchStatusBar
@@ -410,6 +452,7 @@ export function ReservationV2Client({
                             isSidebarOpen={isSidebarOpen}
                             onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
                             onNewReservation={() => setIsReservationModalOpen(true)}
+                            onVoiceCommand={applyVoiceCommand}
                         />
                         {hasActiveFilters && (
                             <SearchStatusBar
