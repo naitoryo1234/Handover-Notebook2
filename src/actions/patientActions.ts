@@ -209,6 +209,7 @@ export async function deletePatient(patientId: string) {
 /**
  * Search patients for selection (Lightweight)
  * Supports hiragana/katakana insensitive search
+ * Includes last appointment/record info for disambiguation
  */
 export async function searchPatientsForSelect(query: string) {
     if (!query || query.length < 1) return [];
@@ -239,16 +240,60 @@ export async function searchPatientsForSelect(query: string) {
             pId: true,
             birthDate: true,
             phone: true,
-            memo: true
+            memo: true,
+            // 最終予約
+            appointments: {
+                orderBy: { startAt: 'desc' },
+                take: 1,
+                select: { startAt: true, status: true }
+            },
+            // 最終記録
+            records: {
+                orderBy: { visitDate: 'desc' },
+                take: 1,
+                select: { visitDate: true }
+            }
         },
         take: 10,
         orderBy: { updatedAt: 'desc' }
     });
 
-    return patients.map(p => ({
-        ...p,
-        birthDate: p.birthDate ? p.birthDate.toISOString() : null
-    }));
+    return patients.map(p => {
+        const lastAppointment = p.appointments[0];
+        const lastRecord = p.records[0];
+
+        // 直近の来店情報を決定（予約と記録の新しい方）
+        let lastVisit: string | null = null;
+        let lastVisitType: 'appointment' | 'record' | null = null;
+
+        if (lastAppointment && lastRecord) {
+            if (lastAppointment.startAt >= lastRecord.visitDate) {
+                lastVisit = lastAppointment.startAt.toISOString();
+                lastVisitType = 'appointment';
+            } else {
+                lastVisit = lastRecord.visitDate.toISOString();
+                lastVisitType = 'record';
+            }
+        } else if (lastAppointment) {
+            lastVisit = lastAppointment.startAt.toISOString();
+            lastVisitType = 'appointment';
+        } else if (lastRecord) {
+            lastVisit = lastRecord.visitDate.toISOString();
+            lastVisitType = 'record';
+        }
+
+        return {
+            id: p.id,
+            name: p.name,
+            kana: p.kana,
+            pId: p.pId,
+            birthDate: p.birthDate ? p.birthDate.toISOString() : null,
+            phone: p.phone,
+            memo: p.memo,
+            lastVisit,
+            lastVisitType
+        };
+    });
 }
 
 /**

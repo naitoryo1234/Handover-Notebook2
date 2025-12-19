@@ -256,6 +256,15 @@ export function ReservationV2Client({
 
     // 音声コマンド適用ハンドラ
     const applyVoiceCommand = useCallback((result: VoiceCommandResult) => {
+        // 新しい音声コマンド時は既存フィルターをすべてクリア
+        setSearchQuery('');
+        setSelectedStaffId('all');
+        setShowUnassignedOnly(false);
+        setShowUnresolvedOnly(false);
+        setTimeRange('all');
+        setAfterHour(null);
+        setAroundHour(null);
+
         // 名前検索
         if (result.name) {
             setSearchQuery(result.name);

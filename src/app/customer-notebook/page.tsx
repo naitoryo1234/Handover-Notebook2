@@ -1,8 +1,9 @@
 import { getPatients, getPatientById } from '@/services/patientService';
 import Link from 'next/link';
-import { Users, FileText } from 'lucide-react';
+import { Users, FileText, Home, Calendar } from 'lucide-react';
 import { CustomerNotebookClient } from './CustomerNotebookClient';
 import { CustomerNotebookSearch } from './CustomerNotebookSearch';
+import { CustomerNotebookToolbar } from './CustomerNotebookToolbar';
 import { EmptyState, EmptyStateSearch } from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,36 @@ export default async function CustomerNotebookPage({ searchParams }: PageProps) 
 
     return (
         <div className="space-y-6">
+            {/* ヘッダー: ナビゲーション + クイック記録 */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                    <Link
+                        href="/"
+                        title="ホーム"
+                        className="flex items-center justify-center p-2 text-slate-500 hover:text-slate-700 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                    >
+                        <Home className="w-5 h-5" />
+                    </Link>
+                    <div className="w-px h-4 bg-slate-200" />
+                    <Link
+                        href="/customer-notebook"
+                        title="Customer Notebook"
+                        className="flex items-center justify-center p-2 text-indigo-600 bg-white shadow-sm rounded-md"
+                    >
+                        <Users className="w-5 h-5" />
+                    </Link>
+                    <div className="w-px h-4 bg-slate-200" />
+                    <Link
+                        href="/reservation-v2"
+                        title="Reservation Notebook"
+                        className="flex items-center justify-center p-2 text-emerald-600 hover:text-emerald-700 hover:bg-white hover:shadow-sm rounded-md transition-all"
+                    >
+                        <Calendar className="w-5 h-5" />
+                    </Link>
+                </div>
 
+                <CustomerNotebookToolbar />
+            </div>
 
             {/* 2カラムレイアウト */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
