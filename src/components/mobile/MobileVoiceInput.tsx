@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Mic, Square, Loader2, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -18,9 +19,15 @@ export function MobileVoiceInput({ onCommit, isProcessing = false, trigger }: Mo
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [transcript, setTranscript] = useState(''); // Stores final text to edit if needed
     const [isOpen, setIsOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
+
+    // Portal用: クライアントサイドでのみマウント
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const startRecording = async () => {
         // Safe check for secure context (HTTPS/localhost)
@@ -129,9 +136,11 @@ export function MobileVoiceInput({ onCommit, isProcessing = false, trigger }: Mo
         );
     }
 
-    // Modal Overlay
-    return (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end lg:hidden animate-in fade-in duration-200">
+    // Modal Overlay - Portal経由でbody直下にレンダリング
+    if (!mounted) return null;
+
+    const modalContent = (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col justify-end animate-in fade-in duration-200">
             <div className="bg-white rounded-t-3xl p-6 min-h-[50vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -209,5 +218,7 @@ export function MobileVoiceInput({ onCommit, isProcessing = false, trigger }: Mo
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
 
