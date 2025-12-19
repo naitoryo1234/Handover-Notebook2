@@ -18,7 +18,9 @@ export interface VoiceCommandResult {
     showUnassigned?: boolean; // 担当未定フィルター
     showUnresolved?: boolean; // 申し送りありフィルター
     staffName?: string;      // スタッフ名（敬称除去済み）
-    timeRange?: TimeRange;   // 時間帯フィルター
+    timeRange?: TimeRange;   // 時間帯フィルター（午前/午後/夕方/夜）
+    afterHour?: number;      // 「〇時以降」の時刻 (0-23)
+    aroundHour?: number;     // 「〇時周辺」の時刻 (0-23)
     action?: 'search' | 'filter' | 'navigate';
     rawText: string;         // 元のテキスト
     confidence: number;      // 解析の確信度 (0-1)
@@ -123,7 +125,9 @@ export async function parseVoiceCommand(rawText: string): Promise<ParseVoiceComm
    - 「午後」「昼」「PM」 → "afternoon"
    - 「夕方」「夕」 → "evening"
    - 「夜」「夜間」 → "night"
-8. confidence: 解析の確信度（0.0〜1.0）
+8. afterHour: 「〇時以降」「〇時から」の時刻を数値で抽出（0-23）
+9. aroundHour: 「〇時周辺」「〇時頃」「〇時あたり」の時刻を数値で抽出（0-23）
+10. confidence: 解析の確信度（0.0〜1.0）
 
 【発話例と期待される出力】
 - 「山田さん」→ { "name": "山田", "confidence": 0.9 }
@@ -132,7 +136,9 @@ export async function parseVoiceCommand(rawText: string): Promise<ParseVoiceComm
 - 「明日の申し送り」→ { "date": "tomorrow", "showUnresolved": true, "confidence": 0.85 }
 - 「田中先生の予約」→ { "staffName": "田中", "confidence": 0.9 }
 - 「午前中」→ { "timeRange": "morning", "confidence": 0.9 }
-- 「佐藤さんの明日の予約」→ { "name": "佐藤", "date": "tomorrow", "confidence": 0.85 }
+- 「17時以降の予約」→ { "afterHour": 17, "confidence": 0.9 }
+- 「18時周辺」→ { "aroundHour": 18, "confidence": 0.9 }
+- 「12月20日の18時頃」→ { "date": "12月20日", "aroundHour": 18, "confidence": 0.85 }
 
 【出力形式】
 JSONのみを出力してください。説明文は不要です。
@@ -144,6 +150,8 @@ JSONのみを出力してください。説明文は不要です。
   "showUnresolved": false,
   "staffName": "スタッフ名または空文字",
   "timeRange": "morning/afternoon/evening/night/空文字",
+  "afterHour": null,
+  "aroundHour": null,
   "confidence": 0.9
 }`;
 
@@ -174,7 +182,9 @@ JSONのみを出力してください。説明文は不要です。
             showUnresolved: parsed.showUnresolved || false,
             staffName: parsed.staffName || undefined,
             timeRange: parsed.timeRange as TimeRange || undefined,
-            action: parsed.name ? 'search' : (resolvedDate || parsed.period || parsed.showUnassigned || parsed.showUnresolved || parsed.staffName || parsed.timeRange) ? 'filter' : undefined,
+            afterHour: typeof parsed.afterHour === 'number' ? parsed.afterHour : undefined,
+            aroundHour: typeof parsed.aroundHour === 'number' ? parsed.aroundHour : undefined,
+            action: parsed.name ? 'search' : (resolvedDate || parsed.period || parsed.showUnassigned || parsed.showUnresolved || parsed.staffName || parsed.timeRange || parsed.afterHour !== null || parsed.aroundHour !== null) ? 'filter' : undefined,
             rawText: rawText,
             confidence: parsed.confidence || 0.5
         };
@@ -281,6 +291,26 @@ function fallbackParse(rawText: string): ParseVoiceCommandResponse {
         period = 'daily';
     }
 
+    // 「〇時以降」パターン
+    let afterHour: number | undefined;
+    const afterMatch = text.match(/(\d{1,2})時以降|(\d{1,2})時から/);
+    if (afterMatch) {
+        const hour = parseInt(afterMatch[1] || afterMatch[2], 10);
+        if (hour >= 0 && hour <= 23) {
+            afterHour = hour;
+        }
+    }
+
+    // 「〇時周辺」「〇時頃」パターン
+    let aroundHour: number | undefined;
+    const aroundMatch = text.match(/(\d{1,2})時(周辺|頃|あたり|ごろ)/);
+    if (aroundMatch) {
+        const hour = parseInt(aroundMatch[1], 10);
+        if (hour >= 0 && hour <= 23) {
+            aroundHour = hour;
+        }
+    }
+
     return {
         success: true,
         data: {
@@ -291,7 +321,9 @@ function fallbackParse(rawText: string): ParseVoiceCommandResponse {
             showUnresolved,
             staffName,
             timeRange,
-            action: name ? 'search' : (date || period || showUnassigned || showUnresolved || staffName || timeRange) ? 'filter' : undefined,
+            afterHour,
+            aroundHour,
+            action: name ? 'search' : (date || period || showUnassigned || showUnresolved || staffName || timeRange || afterHour !== undefined || aroundHour !== undefined) ? 'filter' : undefined,
             rawText: text,
             confidence: 0.6 // フォールバックは確信度低め
         }

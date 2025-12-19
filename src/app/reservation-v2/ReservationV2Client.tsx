@@ -71,6 +71,8 @@ export function ReservationV2Client({
 
     const [showUnresolvedOnly, setShowUnresolvedOnly] = useState(false);
     const [timeRange, setTimeRange] = useState<TimeRange | 'all'>('all');
+    const [afterHour, setAfterHour] = useState<number | null>(null);
+    const [aroundHour, setAroundHour] = useState<number | null>(null);
 
     // Modal State
     const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
@@ -100,7 +102,9 @@ export function ReservationV2Client({
         || viewMode !== 'daily'
         || showUnassignedOnly
         || showUnresolvedOnly
-        || timeRange !== 'all';
+        || timeRange !== 'all'
+        || afterHour !== null
+        || aroundHour !== null;
 
     // フィルター適用後の予約リスト
     const filteredAppointments = useMemo(() => {
@@ -156,6 +160,22 @@ export function ReservationV2Client({
             });
         }
 
+        // 「〇時以降」フィルター
+        if (afterHour !== null) {
+            result = result.filter(a => {
+                const hour = new Date(a.visitDate).getHours();
+                return hour >= afterHour;
+            });
+        }
+
+        // 「〇時周辺」フィルター（前後1時間）
+        if (aroundHour !== null) {
+            result = result.filter(a => {
+                const hour = new Date(a.visitDate).getHours();
+                return hour >= aroundHour - 1 && hour <= aroundHour + 1;
+            });
+        }
+
         // 全期間モードの時の過去フィルタ
         if (viewMode === 'all' && !includePast) {
             const today = new Date(); // リアルタイムの今日
@@ -171,7 +191,7 @@ export function ReservationV2Client({
         result = result.sort((a, b) => new Date(a.visitDate).getTime() - new Date(b.visitDate).getTime());
 
         return result;
-    }, [initialAppointments, allAppointments, debouncedSearchQuery, selectedStaffId, viewMode, showUnassignedOnly, showUnresolvedOnly, includePast, timeRange]);
+    }, [initialAppointments, allAppointments, debouncedSearchQuery, selectedStaffId, viewMode, showUnassignedOnly, showUnresolvedOnly, includePast, timeRange, afterHour, aroundHour]);
 
     // フィルターをクリア
     const clearFilters = () => {
@@ -181,6 +201,8 @@ export function ReservationV2Client({
         setShowUnassignedOnly(false);
         setShowUnresolvedOnly(false);
         setTimeRange('all');
+        setAfterHour(null);
+        setAroundHour(null);
     };
 
     // 日付選択ハンドラ (カレンダー/指定日付ジャンプ用)
@@ -300,8 +322,22 @@ export function ReservationV2Client({
             toast.success(`${labels[result.timeRange]}の予約を表示`, { duration: 2000 });
         }
 
+        // 「〇時以降」フィルター
+        if (typeof result.afterHour === 'number') {
+            setAfterHour(result.afterHour);
+            if (viewMode !== 'all') setViewMode('all');
+            toast.success(`${result.afterHour}時以降の予約を表示`, { duration: 2000 });
+        }
+
+        // 「〇時周辺」フィルター
+        if (typeof result.aroundHour === 'number') {
+            setAroundHour(result.aroundHour);
+            if (viewMode !== 'all') setViewMode('all');
+            toast.success(`${result.aroundHour}時周辺の予約を表示`, { duration: 2000 });
+        }
+
         // 解析失敗時はそのままテキスト検索
-        if (!result.name && !result.date && !result.period && !result.showUnassigned && !result.showUnresolved && !result.staffName && !result.timeRange) {
+        if (!result.name && !result.date && !result.period && !result.showUnassigned && !result.showUnresolved && !result.staffName && !result.timeRange && result.afterHour === undefined && result.aroundHour === undefined) {
             // 敬称を除去して検索（フォールバック）
             const cleanedText = result.rawText
                 .replace(/さん|様|さま|くん|ちゃん/g, '')
