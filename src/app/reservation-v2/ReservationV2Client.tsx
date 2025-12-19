@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { format, addDays, parseISO } from 'date-fns';
+import { ja } from 'date-fns/locale';
 
 import { useRouter } from 'next/navigation';
 import { Appointment } from '@/services/appointmentServiceV2';
@@ -30,7 +31,7 @@ interface Patient {
     pId: number;
 }
 
-interface Stats {
+export interface Stats {
     total: number;
     unassigned: number;
     unresolvedMemos: number;
@@ -44,8 +45,6 @@ interface ReservationV2ClientProps {
     currentDate: string;
     stats: Stats;
 }
-
-// ... imports
 
 export type ViewMode = 'daily' | 'all';
 
@@ -109,6 +108,8 @@ export function ReservationV2Client({
         // So:
         // ViewMode = 'all' -> Source: allAppointments (filtered by date if includePast is false)
         // ViewMode = 'daily' -> Source: initialAppointments (which is server-filtered by currentDate)
+        // 
+        // 修正: 検索時は強制的に viewMode='all' になる（handleSearchChange）ので、ここはシンプルで良い。
 
         let result = viewMode === 'all' ? allAppointments : initialAppointments;
 
@@ -163,112 +164,129 @@ export function ReservationV2Client({
         setShowUnresolvedOnly(false);
     };
 
-    // 日付ナビゲーション
+    // 日付選択ハンドラ (カレンダー/指定日付ジャンプ用)
+    const handleDateSelect = (dateStr: string) => {
+        setViewMode('daily'); // 日付を指定したら必ず日次モードへ
+        router.push(`/reservation-v2?date=${dateStr}`);
+    };
+
+    // 日付ナビゲーション (前日/翌日)
     const handleDateChange = (direction: 'prev' | 'next') => {
         const current = parseISO(currentDate);
         const newDate = direction === 'next' ? addDays(current, 1) : addDays(current, -1);
-        setViewMode('daily'); // 日付操作したら必ず日次モードへ
-        router.push(`/reservation-v2?date=${format(newDate, 'yyyy-MM-dd')}`);
+        handleDateSelect(format(newDate, 'yyyy-MM-dd'));
     };
 
     // クイックアクションハンドラ (今日/明日/全期間)
-    const handleQuickAction = (action: 'today' | 'tomorrow' | 'all') => {
+    const handleQuickAction = (action: 'today' | 'tomorrow' | 'all' | 'daily') => {
         const current = new Date();
         const tomorrow = addDays(current, 1);
 
         if (action === 'today') {
-            setViewMode('daily');
-            router.push(`/reservation-v2?date=${format(current, 'yyyy-MM-dd')}`);
+            handleDateSelect(format(current, 'yyyy-MM-dd'));
         } else if (action === 'tomorrow') {
-            setViewMode('daily');
-            router.push(`/reservation-v2?date=${format(tomorrow, 'yyyy-MM-dd')}`);
+            handleDateSelect(format(tomorrow, 'yyyy-MM-dd'));
         } else if (action === 'all') {
             setViewMode('all');
+        } else if (action === 'daily') {
+            setViewMode('daily');
+        }
+    };
+
+    // 検索ハンドラ (検索時は自動で全期間・過去込みモードにして検索性を向上)
+    const handleSearchChange = (query: string) => {
+        setSearchQuery(query);
+        if (query) {
+            // 検索文字が入ったら全期間検索モードへ
+            if (viewMode !== 'all') setViewMode('all');
+            if (!includePast) setIncludePast(true);
+        } else {
+            // クリアされたら今日に戻す（または元の状態に戻す）
+            // ユーザー体験的には「検索終わったから今日の予定に戻る」が自然か
+            const current = new Date(); // URLの日付に戻すべきだが、とりあえず今日に戻すのが無難
+            if (viewMode === 'all') {
+                // ここで日付リセットまですると不便な場合もあるが、要望としては「戻りたい」はず
+                // ただしURLのdateパラメータは生きているので、dailyに戻せばURLの日付が表示される
+                setViewMode('daily');
+            }
+            // includePastは戻さない（ユーザーが意図してオンにしたかもしれないので）
         }
     };
 
     // 顧客選択ハンドラ (サイドバーからの遷移用)
     const handlePatientSelect = (patientName: string) => {
-        setSearchQuery(patientName); // 名前で検索
-        setViewMode('all');          // 全期間表示
-        setIncludePast(false);       // 過去分は含めない (これからの方が見たい)
+        handleSearchChange(patientName); // 共通ロジックを使用
         setSelectedStaffId('all');   // スタッフ絞り込み解除
     };
 
+    // フィルター個別解除ハンドラ
+    const handleRemoveFilter = (type: 'query' | 'staff' | 'unassigned' | 'unresolved' | 'period') => {
+        switch (type) {
+            case 'query': setSearchQuery(''); break;
+            case 'staff': setSelectedStaffId('all'); break;
+            case 'unassigned': setShowUnassignedOnly(false); break;
+            case 'unresolved': setShowUnresolvedOnly(false); break;
+            case 'period': setViewMode('daily'); break;
+        }
+    };
+
+    // Handlers
+    const handleCheckIn = async (id: string) => {
+        const result = await checkInAppointmentAction(id);
+        if (result.success) {
+            toast.success('チェックイン完了', {
+                description: 'お客様の来店を確認しました',
+                action: {
+                    label: '元に戻す',
+                    onClick: async () => {
+                        const undoResult = await cancelCheckInAction(id);
+                        if (undoResult.success) {
+                            toast.info('チェックインを取り消しました');
+                        }
+                    }
+                },
+                duration: 5000
+            });
+        } else {
+            toast.error('エラー', { description: result.message || 'チェックインに失敗しました' });
+        }
+    };
+
+    const handleComplete = async (id: string) => {
+        const result = await completeAppointmentAction(id);
+        if (result.success) {
+            toast.success('施術完了', {
+                description: '予約が完了になりました',
+                action: {
+                    label: '元に戻す',
+                    onClick: async () => {
+                        const undoResult = await undoAppointmentStatusAction(id, 'arrived');
+                        if (undoResult.success) {
+                            toast.info('完了を取り消しました');
+                        }
+                    }
+                },
+                duration: 5000
+            });
+        } else {
+            toast.error('エラー', { description: result.message || '完了処理に失敗しました' });
+        }
+    };
+
+    // リストヘッダーのラベル生成
+    const listLabel = viewMode === 'all'
+        ? '予約一覧'
+        : `${format(parseISO(currentDate), 'yyyy-MM-dd', { locale: ja })} (${format(parseISO(currentDate), 'eee', { locale: ja })})`;
+
     return (
         <div className="flex h-screen max-h-screen bg-slate-50 overflow-hidden">
-            {/* サイドバー */}
-            {isSidebarOpen && (
-                <div className="w-[300px] flex-none h-full border-r border-slate-200 bg-white hidden lg:block z-20">
-                    <SidebarContainer
-                        calendarContent={
-                            <MiniCalendar
-                                currentDate={currentDate}
-                                highlightSelected={viewMode === 'daily'}
-                                onDateSelect={(date) => {
-                                    // カレンダーの日付を選択したらその日に移動し、単日モードへ
-                                    setViewMode('daily');
-                                    router.push(`/reservation-v2?date=${date}`);
-                                }}
-                            />
-                        }
-                        todayListContent={
-                            <TodayAppointmentsList
-                                appointments={todayAppointments}
-                                onPatientSelect={handlePatientSelect}
-                                onCheckIn={async (id) => {
-                                    const result = await checkInAppointmentAction(id);
-                                    if (result.success) {
-                                        toast.success('チェックイン完了', {
-                                            description: 'お客様の来店を確認しました',
-                                            action: {
-                                                label: '元に戻す',
-                                                onClick: async () => {
-                                                    const undoResult = await cancelCheckInAction(id);
-                                                    if (undoResult.success) {
-                                                        toast.info('チェックインを取り消しました');
-                                                    }
-                                                }
-                                            },
-                                            duration: 5000
-                                        });
-                                    } else {
-                                        toast.error('エラー', { description: result.message || 'チェックインに失敗しました' });
-                                    }
-                                }}
-                                onComplete={async (id) => {
-                                    const result = await completeAppointmentAction(id);
-                                    if (result.success) {
-                                        toast.success('施術完了', {
-                                            description: '予約が完了になりました',
-                                            action: {
-                                                label: '元に戻す',
-                                                onClick: async () => {
-                                                    const undoResult = await undoAppointmentStatusAction(id, 'arrived');
-                                                    if (undoResult.success) {
-                                                        toast.info('完了を取り消しました');
-                                                    }
-                                                }
-                                            },
-                                            duration: 5000
-                                        });
-                                    } else {
-                                        toast.error('エラー', { description: result.message || '完了処理に失敗しました' });
-                                    }
-                                }}
-                            />
-                        }
-                    />
-                </div>
-            )}
-
             {/* メインコンテンツ (スクロール領域) */}
-            <div className="flex-1 h-full overflow-y-auto min-w-0">
-                <div className="w-full sticky top-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm transition-all">
+            <div className="flex-1 h-full flex flex-col min-w-0">
+                <div className="w-full shrink-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm transition-all border-b border-slate-200">
                     {/* ツールバー (日付・アクション・フィルタ) */}
                     <ReservationToolbar
                         searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
+                        onSearchChange={handleSearchChange}
                         selectedStaffId={selectedStaffId}
                         onStaffChange={setSelectedStaffId}
                         staffList={staffList}
@@ -278,6 +296,7 @@ export function ReservationV2Client({
                         onIncludePastChange={setIncludePast}
                         currentDate={currentDate}
                         onDateChange={handleDateChange}
+                        onDateSelect={handleDateSelect}
                         stats={stats}
                         showUnassignedOnly={showUnassignedOnly}
                         onUnassignedToggle={() => setShowUnassignedOnly(!showUnassignedOnly)}
@@ -300,73 +319,101 @@ export function ReservationV2Client({
                             showUnresolvedOnly={showUnresolvedOnly}
                             resultCount={filteredAppointments.length}
                             onClear={clearFilters}
+                            onRemoveFilter={handleRemoveFilter}
                         />
                     )}
                 </div>
 
-                {/* テーブル */}
-                <ReservationTable
-                    appointments={filteredAppointments}
-                    onEdit={(id) => {
-                        // 編集対象の予約を探す
-                        const target = filteredAppointments.find(a => a.id === id);
-                        if (target) {
-                            setEditingAppointment({
-                                id: target.id,
-                                patientId: target.patientId,
-                                patientName: target.patientName,
-                                patientKana: target.patientKana,
-                                visitDate: target.visitDate,
-                                duration: target.duration,
-                                staffId: target.staffId,
-                                memo: target.memo,
-                                adminMemo: target.adminMemo
-                            });
-                            setIsReservationModalOpen(true);
-                        }
-                    }}
-                    onDelete={(id) => setDeleteTargetId(id)}
-                    onCheckIn={async (id) => {
-                        const result = await checkInAppointmentAction(id);
-                        if (result.success) {
-                            toast.success('チェックイン完了', {
-                                description: 'お客様の来店を確認しました',
-                                action: {
-                                    label: '元に戻す',
-                                    onClick: async () => {
-                                        const undoResult = await cancelCheckInAction(id);
-                                        if (undoResult.success) {
-                                            toast.info('チェックインを取り消しました');
-                                        }
+                <div className="flex-1 overflow-hidden">
+                    {/* Mobile Layout (md未満) */}
+                    <div className="md:hidden h-full flex flex-col">
+                        <TodayAppointmentsList
+                            appointments={filteredAppointments}
+                            listLabel={listLabel}
+                            onPatientSelect={handlePatientSelect}
+                            onCheckIn={handleCheckIn}
+                            onComplete={handleComplete}
+                            onCardTap={(apt) => {
+                                setEditingAppointment({
+                                    id: apt.id,
+                                    patientId: apt.patientId,
+                                    patientName: apt.patientName,
+                                    patientKana: apt.patientKana,
+                                    visitDate: apt.visitDate,
+                                    duration: apt.duration,
+                                    staffId: apt.staffId,
+                                    memo: apt.memo,
+                                    adminMemo: apt.adminMemo
+                                });
+                                setIsReservationModalOpen(true);
+                            }}
+                            filterState={{
+                                unassigned: showUnassignedOnly,
+                                unresolved: showUnresolvedOnly
+                            }}
+                            onToggleFilter={(type) => {
+                                if (type === 'unassigned') setShowUnassignedOnly(!showUnassignedOnly);
+                                if (type === 'unresolved') setShowUnresolvedOnly(!showUnresolvedOnly);
+                            }}
+                        />
+                    </div>
+
+                    {/* Desktop Layout (md以上) */}
+                    <div className="hidden md:flex h-full">
+                        {/* Left: Reservation Table */}
+                        <div className="flex-1 overflow-hidden flex flex-col min-w-0 bg-white border-r border-slate-200 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-10">
+                            <ReservationTable
+                                appointments={filteredAppointments}
+                                onEdit={(id) => {
+                                    const apt = allAppointments.find(a => a.id === id);
+                                    if (apt) {
+                                        setEditingAppointment({
+                                            id: apt.id,
+                                            patientId: apt.patientId,
+                                            patientName: apt.patientName,
+                                            patientKana: apt.patientKana,
+                                            visitDate: apt.visitDate,
+                                            duration: apt.duration,
+                                            staffId: apt.staffId,
+                                            memo: apt.memo,
+                                            adminMemo: apt.adminMemo
+                                        });
+                                        setIsReservationModalOpen(true);
                                     }
-                                },
-                                duration: 5000
-                            });
-                        } else {
-                            toast.error('エラー', { description: result.message || 'チェックインに失敗しました' });
-                        }
-                    }}
-                    onComplete={async (id) => {
-                        const result = await completeAppointmentAction(id);
-                        if (result.success) {
-                            toast.success('施術完了', {
-                                description: '予約が完了になりました',
-                                action: {
-                                    label: '元に戻す',
-                                    onClick: async () => {
-                                        const undoResult = await undoAppointmentStatusAction(id, 'arrived');
-                                        if (undoResult.success) {
-                                            toast.info('完了を取り消しました');
-                                        }
+                                }}
+                                onDelete={(id) => setDeleteTargetId(id)}
+                                onCheckIn={handleCheckIn}
+                                onComplete={handleComplete}
+                            />
+                        </div>
+
+                        {/* Right: Sidebar */}
+                        {isSidebarOpen && (
+                            <div className="w-[320px] shrink-0 bg-slate-50 border-l border-slate-200 flex flex-col h-full shadow-inner">
+                                <SidebarContainer
+                                    calendarContent={
+                                        <MiniCalendar
+                                            currentDate={currentDate}
+                                            highlightSelected={viewMode === 'daily'}
+                                            onDateSelect={(date) => {
+                                                setViewMode('daily');
+                                                router.push(`/reservation-v2?date=${date}`);
+                                            }}
+                                        />
                                     }
-                                },
-                                duration: 5000
-                            });
-                        } else {
-                            toast.error('エラー', { description: result.message || '完了処理に失敗しました' });
-                        }
-                    }}
-                />
+                                    todayListContent={
+                                        <TodayAppointmentsList
+                                            appointments={todayAppointments}
+                                            onPatientSelect={handlePatientSelect}
+                                            onCheckIn={handleCheckIn}
+                                            onComplete={handleComplete}
+                                        />
+                                    }
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <ReservationModal
@@ -400,6 +447,5 @@ export function ReservationV2Client({
                 }}
             />
         </div>
-
     );
 }

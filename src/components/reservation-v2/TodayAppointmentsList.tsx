@@ -12,9 +12,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 interface TodayAppointmentsListProps {
     appointments: Appointment[];
     currentTime?: Date;
+    listLabel?: string; // ヘッダーに表示するラベル (日付など)
     onPatientSelect?: (patientName: string) => void;
     onCheckIn?: (id: string) => void;
     onComplete?: (id: string) => void;
+    onCardTap?: (appointment: Appointment) => void;
+    filterState?: {
+        unassigned: boolean;
+        unresolved: boolean;
+    };
+    onToggleFilter?: (type: 'unassigned' | 'unresolved') => void;
 }
 
 type DialogState = {
@@ -25,9 +32,13 @@ type DialogState = {
 export function TodayAppointmentsList({
     appointments,
     currentTime = new Date(),
+    listLabel,
     onPatientSelect,
     onCheckIn,
-    onComplete
+    onComplete,
+    onCardTap,
+    filterState,
+    onToggleFilter
 }: TodayAppointmentsListProps) {
     // 申し送り・メモダイアログ用
     const [dialogState, setDialogState] = useState<DialogState>(null);
@@ -89,13 +100,17 @@ export function TodayAppointmentsList({
             {/* Header - Slim Bar, Full Width */}
             <div className="shrink-0 bg-emerald-600 px-3 py-2 text-white shadow-sm z-10 mt-0">
                 <div className="flex items-center justify-between">
-                    {/* Left: Date & Count */}
+                    {/* Left: Label (Date) & Count */}
                     <div className="flex items-center gap-2">
                         <span className="font-bold text-sm leading-none tracking-tight">
-                            {format(new Date(), 'yyyy-MM-dd', { locale: ja })}
-                            <span className="font-normal opacity-90 ml-1">
-                                ({format(new Date(), 'eee', { locale: ja })})
-                            </span>
+                            {listLabel || (
+                                <>
+                                    {format(new Date(), 'yyyy-MM-dd', { locale: ja })}
+                                    <span className="font-normal opacity-90 ml-1">
+                                        ({format(new Date(), 'eee', { locale: ja })})
+                                    </span>
+                                </>
+                            )}
                         </span>
                         <span className="flex items-center justify-center h-5 px-1.5 text-[10px] font-bold bg-white/20 rounded-full backdrop-blur-sm">
                             {filteredAppointments.length}
@@ -115,19 +130,36 @@ export function TodayAppointmentsList({
             </div>
 
             {/* Alert Strip */}
+            {/* Alert Strip (Interactive Filters) */}
             {(filteredAppointments.some(a => !a.staffName) || filteredAppointments.some(a => a.adminMemo)) && (
-                <div className="shrink-0 bg-amber-50 border-b border-amber-100 px-3 py-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs animate-in slide-in-from-top-2">
+                <div className="shrink-0 bg-amber-50 border-b border-amber-100 px-3 py-2 flex flex-wrap gap-x-4 gap-y-2 text-xs animate-in slide-in-from-top-2">
                     {filteredAppointments.filter(a => !a.staffName).length > 0 && (
-                        <div className="flex items-center gap-1 text-amber-700 font-bold">
-                            <User className="w-3 h-3" />
+                        <button
+                            onClick={() => onToggleFilter?.('unassigned')}
+                            className={cn(
+                                "flex items-center gap-1.5 font-bold transition-all px-2 py-1 rounded-md",
+                                filterState?.unassigned
+                                    ? "bg-amber-200 text-amber-900 shadow-sm ring-1 ring-amber-400"
+                                    : "text-amber-700 bg-amber-100/50 hover:bg-amber-100"
+                            )}
+                        >
+                            <User className="w-3.5 h-3.5" />
                             <span>担当未定 {filteredAppointments.filter(a => !a.staffName).length}件</span>
-                        </div>
+                        </button>
                     )}
                     {filteredAppointments.filter(a => a.adminMemo).length > 0 && (
-                        <div className="flex items-center gap-1 text-rose-600 font-bold animate-pulse">
-                            <AlertCircle className="w-3 h-3" />
+                        <button
+                            onClick={() => onToggleFilter?.('unresolved')}
+                            className={cn(
+                                "flex items-center gap-1.5 font-bold transition-all px-2 py-1 rounded-md",
+                                filterState?.unresolved
+                                    ? "bg-rose-200 text-rose-900 shadow-sm ring-1 ring-rose-400 animate-none"
+                                    : "text-rose-600 bg-rose-100/50 hover:bg-rose-100 animate-pulse"
+                            )}
+                        >
+                            <AlertCircle className="w-3.5 h-3.5" />
                             <span>申し送り {filteredAppointments.filter(a => a.adminMemo).length}件</span>
-                        </div>
+                        </button>
                     )}
                 </div>
             )}
@@ -148,7 +180,7 @@ export function TodayAppointmentsList({
                         return (
                             <div
                                 key={apt.id}
-                                onClick={() => onPatientSelect?.(apt.patientName)}
+                                onClick={() => onCardTap ? onCardTap(apt) : onPatientSelect?.(apt.patientName)}
                                 className={cn(
                                     "bg-white rounded-xl p-3 shadow-sm border border-slate-100 relative group transition-all hover:shadow-md cursor-pointer hover:bg-slate-50 active:bg-slate-100",
                                     apt.status === 'cancelled' && "opacity-50 bg-slate-50 grayscale-[0.5]",

@@ -10,9 +10,10 @@ import { transcribeAudio } from '@/actions/groqActions';
 interface MobileVoiceInputProps {
     onCommit: (text: string) => void;
     isProcessing?: boolean;
+    trigger?: React.ReactNode;
 }
 
-export function MobileVoiceInput({ onCommit, isProcessing = false }: MobileVoiceInputProps) {
+export function MobileVoiceInput({ onCommit, isProcessing = false, trigger }: MobileVoiceInputProps) {
     const [isRecording, setIsRecording] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [transcript, setTranscript] = useState(''); // Stores final text to edit if needed
@@ -104,8 +105,12 @@ export function MobileVoiceInput({ onCommit, isProcessing = false }: MobileVoice
         }
     };
 
-    // Global Floating Action Button (FAB)
+    // Global Floating Action Button (FAB) or Custom Trigger
     if (!isOpen) {
+        if (trigger) {
+            return <div onClick={startRecording} className="cursor-pointer">{trigger}</div>;
+        }
+
         return (
             <Button
                 onClick={startRecording}
