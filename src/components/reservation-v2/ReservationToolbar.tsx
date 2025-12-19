@@ -417,17 +417,44 @@ export function ReservationToolbar({
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => onSearchChange(e.target.value)}
-                                placeholder="お客様検索..."
-                                className="pl-9 pr-8 py-1.5 w-60 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                                placeholder="お客様検索 / 🎤 音声コマンド..."
+                                className="pl-9 pr-16 py-1.5 w-72 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                             />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => onSearchChange('')}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
-                                >
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            )}
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => onSearchChange('')}
+                                        className="p-1 text-slate-300 hover:text-slate-500 rounded transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                                <MobileVoiceInput
+                                    onCommit={async (text) => {
+                                        // 音声コマンド解析を呼び出し
+                                        if (onVoiceCommand) {
+                                            const result = await parseVoiceCommand(text);
+                                            if (result.success && result.data) {
+                                                onVoiceCommand(result.data);
+                                            } else {
+                                                // 解析失敗時はそのまま検索
+                                                onSearchChange(text);
+                                            }
+                                        } else {
+                                            // フォールバック: 従来の検索
+                                            onSearchChange(text);
+                                        }
+                                    }}
+                                    trigger={
+                                        <button
+                                            className="p-1 text-slate-400 hover:text-emerald-600 rounded-full hover:bg-emerald-50 transition-colors"
+                                            title="音声でコマンド入力（例: 田中さん、明日の午後、担当未定）"
+                                        >
+                                            <Mic className="w-4 h-4" />
+                                        </button>
+                                    }
+                                />
+                            </div>
                         </div>
 
                         {/* 担当者 */}
