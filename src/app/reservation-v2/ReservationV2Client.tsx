@@ -357,13 +357,16 @@ export function ReservationV2Client({
     };
 
     // フィルター個別解除ハンドラ
-    const handleRemoveFilter = (type: 'query' | 'staff' | 'unassigned' | 'unresolved' | 'period') => {
+    const handleRemoveFilter = (type: 'query' | 'staff' | 'unassigned' | 'unresolved' | 'period' | 'timeRange' | 'afterHour' | 'aroundHour') => {
         switch (type) {
             case 'query': setSearchQuery(''); break;
             case 'staff': setSelectedStaffId('all'); break;
             case 'unassigned': setShowUnassignedOnly(false); break;
             case 'unresolved': setShowUnresolvedOnly(false); break;
             case 'period': setViewMode('daily'); break;
+            case 'timeRange': setTimeRange('all'); break;
+            case 'afterHour': setAfterHour(null); break;
+            case 'aroundHour': setAroundHour(null); break;
         }
     };
 
@@ -453,6 +456,9 @@ export function ReservationV2Client({
                             viewMode={viewMode}
                             showUnassignedOnly={showUnassignedOnly}
                             showUnresolvedOnly={showUnresolvedOnly}
+                            timeRange={timeRange}
+                            afterHour={afterHour}
+                            aroundHour={aroundHour}
                             resultCount={filteredAppointments.length}
                             onClear={clearFilters}
                             onRemoveFilter={handleRemoveFilter}
@@ -558,6 +564,9 @@ export function ReservationV2Client({
                                 viewMode={viewMode}
                                 showUnassignedOnly={showUnassignedOnly}
                                 showUnresolvedOnly={showUnresolvedOnly}
+                                timeRange={timeRange}
+                                afterHour={afterHour}
+                                aroundHour={aroundHour}
                                 resultCount={filteredAppointments.length}
                                 onClear={clearFilters}
                                 onRemoveFilter={handleRemoveFilter}

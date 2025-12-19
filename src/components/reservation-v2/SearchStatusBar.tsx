@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react';
 import { ViewMode } from '@/app/reservation-v2/ReservationV2Client';
+import { TimeRange } from '@/actions/voiceCommandActions';
 
 interface Staff {
     id: string;
@@ -15,9 +16,12 @@ interface SearchStatusBarProps {
     viewMode: ViewMode;
     showUnassignedOnly: boolean;
     showUnresolvedOnly: boolean;
+    timeRange?: TimeRange | 'all';
+    afterHour?: number | null;
+    aroundHour?: number | null;
     resultCount: number;
     onClear: () => void;
-    onRemoveFilter: (type: 'query' | 'staff' | 'unassigned' | 'unresolved' | 'period') => void;
+    onRemoveFilter: (type: 'query' | 'staff' | 'unassigned' | 'unresolved' | 'period' | 'timeRange' | 'afterHour' | 'aroundHour') => void;
 }
 
 export function SearchStatusBar({
@@ -27,6 +31,9 @@ export function SearchStatusBar({
     viewMode,
     showUnassignedOnly,
     showUnresolvedOnly,
+    timeRange,
+    afterHour,
+    aroundHour,
     resultCount,
     onClear,
     onRemoveFilter
@@ -34,6 +41,16 @@ export function SearchStatusBar({
     const getStaffName = (id: string) => {
         const staff = staffList.find(s => s.id === id);
         return staff?.name || id;
+    };
+
+    const getTimeRangeLabel = (range: TimeRange): string => {
+        const labels: Record<TimeRange, string> = {
+            morning: '午前 (0:00-12:00)',
+            afternoon: '午後 (12:00-17:00)',
+            evening: '夕方 (17:00-20:00)',
+            night: '夜 (20:00-24:00)'
+        };
+        return labels[range];
     };
 
     return (
@@ -94,6 +111,36 @@ export function SearchStatusBar({
                         >
                             <span>申し送り</span>
                             <X className="w-3 h-3 md:w-3.5 md:h-3.5 text-red-500 group-hover:text-red-700 transition-colors" />
+                        </button>
+                    )}
+                    {/* 時間帯フィルター */}
+                    {timeRange && timeRange !== 'all' && (
+                        <button
+                            onClick={() => onRemoveFilter('timeRange')}
+                            className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-medium rounded md:rounded-md border border-blue-200 whitespace-nowrap hover:bg-blue-100/80 active:bg-blue-200 transition-colors group"
+                        >
+                            <span>🕐 {getTimeRangeLabel(timeRange)}</span>
+                            <X className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-500 group-hover:text-blue-700 transition-colors" />
+                        </button>
+                    )}
+                    {/* 〇時以降フィルター */}
+                    {afterHour !== null && afterHour !== undefined && (
+                        <button
+                            onClick={() => onRemoveFilter('afterHour')}
+                            className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-medium rounded md:rounded-md border border-blue-200 whitespace-nowrap hover:bg-blue-100/80 active:bg-blue-200 transition-colors group"
+                        >
+                            <span>🕐 {afterHour}時以降</span>
+                            <X className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-500 group-hover:text-blue-700 transition-colors" />
+                        </button>
+                    )}
+                    {/* 〇時周辺フィルター */}
+                    {aroundHour !== null && aroundHour !== undefined && (
+                        <button
+                            onClick={() => onRemoveFilter('aroundHour')}
+                            className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-medium rounded md:rounded-md border border-blue-200 whitespace-nowrap hover:bg-blue-100/80 active:bg-blue-200 transition-colors group"
+                        >
+                            <span>🕐 {aroundHour}時周辺 ({aroundHour - 1}:00-{aroundHour + 1}:59)</span>
+                            <X className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-500 group-hover:text-blue-700 transition-colors" />
                         </button>
                     )}
                 </div>
