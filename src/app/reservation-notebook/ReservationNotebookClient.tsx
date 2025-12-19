@@ -105,10 +105,10 @@ export function ReservationNotebookClient({
         patientId: string;
         visitDate: string;
         visitTime: string;
-        duration: FormDataEntryValue | null;
-        staffId: FormDataEntryValue | null;
-        memo: FormDataEntryValue | null;
-        adminMemo: FormDataEntryValue | null;
+        duration: string | null;
+        staffId: string | null;
+        memo: string | null;
+        adminMemo: string | null;
         id?: string;
     } | null>(null);
 
@@ -125,10 +125,10 @@ export function ReservationNotebookClient({
             patientId: selectedPatientId,
             visitDate: formDate,
             visitTime: formTime,
-            duration: formData.get('duration'),
-            staffId: formData.get('staffId'),
-            memo: formData.get('memo'),
-            adminMemo: formData.get('adminMemo'),
+            duration: formData.get('duration') as string | null,
+            staffId: formData.get('staffId') as string | null,
+            memo: formData.get('memo') as string | null,
+            adminMemo: formData.get('adminMemo') as string | null,
             id: editingAppointment?.id // for update
         };
         setDraftData(data);
