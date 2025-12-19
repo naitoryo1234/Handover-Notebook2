@@ -175,9 +175,22 @@ function fallbackParse(rawText: string): ParseVoiceCommandResponse {
     const nameMatch = text.match(/(.+?)(さん|様|さま|くん|ちゃん)/);
     if (nameMatch) {
         name = nameMatch[1].trim();
-    } else if (text.length <= 10 && !text.includes('予約') && !text.includes('今日') && !text.includes('明日')) {
+    } else if (text.length <= 10 && !text.includes('予約') && !text.includes('今日') && !text.includes('明日') && !text.includes('担当') && !text.includes('未定') && !text.includes('申し送り')) {
         // 短いテキストで予約関連ワードがなければ名前として扱う
         name = text;
+    }
+
+    // 担当未定フィルター（優先的にチェック）
+    let showUnassigned = false;
+    if (text.includes('担当未定') || text.includes('未割り当て') || text.includes('担当者なし') ||
+        (text.includes('担当') && text.includes('未定'))) {
+        showUnassigned = true;
+    }
+
+    // 申し送りフィルター（優先的にチェック）
+    let showUnresolved = false;
+    if (text.includes('申し送り') || text.includes('メモあり') || text.includes('引き継ぎ')) {
+        showUnresolved = true;
     }
 
     // 日付キーワードを抽出
@@ -193,7 +206,10 @@ function fallbackParse(rawText: string): ParseVoiceCommandResponse {
     } else if (text.includes('来週')) {
         date = format(addWeeks(new Date(), 1), 'yyyy-MM-dd');
         period = 'daily';
-    } else if (text.includes('全部') || text.includes('一覧') || text.includes('全期間')) {
+    } else if (text.includes('全部') || text.includes('全期間')) {
+        period = 'all';
+    } else if (text.includes('一覧') && !showUnassigned && !showUnresolved) {
+        // 「一覧」は担当未定/申し送りフィルターと併用される場合は無視
         period = 'all';
     }
 
@@ -210,7 +226,9 @@ function fallbackParse(rawText: string): ParseVoiceCommandResponse {
             name,
             date,
             period,
-            action: name ? 'search' : (date || period) ? 'filter' : undefined,
+            showUnassigned,
+            showUnresolved,
+            action: name ? 'search' : (date || period || showUnassigned || showUnresolved) ? 'filter' : undefined,
             rawText: text,
             confidence: 0.6 // フォールバックは確信度低め
         }
