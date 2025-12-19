@@ -279,11 +279,11 @@ export function ReservationV2Client({
         : `${format(parseISO(currentDate), 'yyyy-MM-dd', { locale: ja })} (${format(parseISO(currentDate), 'eee', { locale: ja })})`;
 
     return (
-        <div className="flex h-screen max-h-screen bg-slate-50 overflow-hidden">
-            {/* メインコンテンツ (スクロール領域) */}
-            <div className="flex-1 h-full flex flex-col min-w-0">
-                <div className="w-full shrink-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm transition-all border-b border-slate-200">
-                    {/* ツールバー (日付・アクション・フィルタ) */}
+        <>
+            {/* ========== Mobile Layout (md未満) ========== */}
+            <div className="md:hidden flex flex-col h-screen max-h-screen bg-slate-50">
+                {/* モバイル用ツールバー */}
+                <div className="shrink-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm border-b border-slate-200">
                     <ReservationToolbar
                         searchQuery={searchQuery}
                         onSearchChange={handleSearchChange}
@@ -307,8 +307,6 @@ export function ReservationV2Client({
                         onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
                         onNewReservation={() => setIsReservationModalOpen(true)}
                     />
-
-                    {/* 検索条件バー (検索中のみ表示・ツールバーと一緒に固定) */}
                     {hasActiveFilters && (
                         <SearchStatusBar
                             searchQuery={searchQuery}
@@ -324,16 +322,116 @@ export function ReservationV2Client({
                     )}
                 </div>
 
-                <div className="flex-1 overflow-hidden">
-                    {/* Mobile Layout (md未満) */}
-                    <div className="md:hidden h-full flex flex-col">
-                        <TodayAppointmentsList
-                            appointments={filteredAppointments}
-                            listLabel={listLabel}
-                            onPatientSelect={handlePatientSelect}
-                            onCheckIn={handleCheckIn}
-                            onComplete={handleComplete}
-                            onCardTap={(apt) => {
+                {/* モバイル用カードリスト */}
+                <div className="flex-1 overflow-y-auto">
+                    <TodayAppointmentsList
+                        appointments={filteredAppointments}
+                        listLabel={listLabel}
+                        onPatientSelect={handlePatientSelect}
+                        onCheckIn={handleCheckIn}
+                        onComplete={handleComplete}
+                        onCardTap={(apt) => {
+                            setEditingAppointment({
+                                id: apt.id,
+                                patientId: apt.patientId,
+                                patientName: apt.patientName,
+                                patientKana: apt.patientKana,
+                                visitDate: apt.visitDate,
+                                duration: apt.duration,
+                                staffId: apt.staffId,
+                                memo: apt.memo,
+                                adminMemo: apt.adminMemo
+                            });
+                            setIsReservationModalOpen(true);
+                        }}
+                        filterState={{
+                            unassigned: showUnassignedOnly,
+                            unresolved: showUnresolvedOnly
+                        }}
+                        onToggleFilter={(type) => {
+                            if (type === 'unassigned') setShowUnassignedOnly(!showUnassignedOnly);
+                            if (type === 'unresolved') setShowUnresolvedOnly(!showUnresolvedOnly);
+                        }}
+                    />
+                </div>
+            </div>
+
+            {/* ========== Desktop Layout (md以上) - 以前のレイアウトを復元 ========== */}
+            <div className="hidden md:flex h-screen max-h-screen bg-slate-50 overflow-hidden">
+                {/* 左: サイドバー */}
+                {isSidebarOpen && (
+                    <div className="w-[300px] flex-none h-full border-r border-slate-200 bg-white z-20">
+                        <SidebarContainer
+                            calendarContent={
+                                <MiniCalendar
+                                    currentDate={currentDate}
+                                    highlightSelected={viewMode === 'daily'}
+                                    onDateSelect={(date) => {
+                                        setViewMode('daily');
+                                        router.push(`/reservation-v2?date=${date}`);
+                                    }}
+                                />
+                            }
+                            todayListContent={
+                                <TodayAppointmentsList
+                                    appointments={todayAppointments}
+                                    onPatientSelect={handlePatientSelect}
+                                    onCheckIn={handleCheckIn}
+                                    onComplete={handleComplete}
+                                />
+                            }
+                        />
+                    </div>
+                )}
+
+                {/* 右: メインコンテンツ (スクロール可能) */}
+                <div className="flex-1 h-full overflow-y-auto min-w-0">
+                    {/* ツールバー (sticky) */}
+                    <div className="sticky top-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm">
+                        <ReservationToolbar
+                            searchQuery={searchQuery}
+                            onSearchChange={handleSearchChange}
+                            selectedStaffId={selectedStaffId}
+                            onStaffChange={setSelectedStaffId}
+                            staffList={staffList}
+                            viewMode={viewMode}
+                            onViewModeChange={handleQuickAction}
+                            includePast={includePast}
+                            onIncludePastChange={setIncludePast}
+                            currentDate={currentDate}
+                            onDateChange={handleDateChange}
+                            onDateSelect={handleDateSelect}
+                            stats={stats}
+                            showUnassignedOnly={showUnassignedOnly}
+                            onUnassignedToggle={() => setShowUnassignedOnly(!showUnassignedOnly)}
+                            showUnresolvedOnly={showUnresolvedOnly}
+                            onUnresolvedToggle={() => setShowUnresolvedOnly(!showUnresolvedOnly)}
+                            displayedCount={filteredAppointments.length}
+                            isSidebarOpen={isSidebarOpen}
+                            onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+                            onNewReservation={() => setIsReservationModalOpen(true)}
+                        />
+                        {hasActiveFilters && (
+                            <SearchStatusBar
+                                searchQuery={searchQuery}
+                                selectedStaffId={selectedStaffId}
+                                staffList={staffList}
+                                viewMode={viewMode}
+                                showUnassignedOnly={showUnassignedOnly}
+                                showUnresolvedOnly={showUnresolvedOnly}
+                                resultCount={filteredAppointments.length}
+                                onClear={clearFilters}
+                                onRemoveFilter={handleRemoveFilter}
+                            />
+                        )}
+                    </div>
+
+                    {/* テーブル */}
+                    <ReservationTable
+                        appointments={filteredAppointments}
+                        onEdit={(id) => {
+                            const apt = allAppointments.find(a => a.id === id);
+                            if (apt) {
                                 setEditingAppointment({
                                     id: apt.id,
                                     patientId: apt.patientId,
@@ -346,76 +444,16 @@ export function ReservationV2Client({
                                     adminMemo: apt.adminMemo
                                 });
                                 setIsReservationModalOpen(true);
-                            }}
-                            filterState={{
-                                unassigned: showUnassignedOnly,
-                                unresolved: showUnresolvedOnly
-                            }}
-                            onToggleFilter={(type) => {
-                                if (type === 'unassigned') setShowUnassignedOnly(!showUnassignedOnly);
-                                if (type === 'unresolved') setShowUnresolvedOnly(!showUnresolvedOnly);
-                            }}
-                        />
-                    </div>
-
-                    {/* Desktop Layout (md以上) */}
-                    <div className="hidden md:flex h-full">
-                        {/* Left: Reservation Table */}
-                        <div className="flex-1 overflow-hidden flex flex-col min-w-0 bg-white border-r border-slate-200 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-10">
-                            <ReservationTable
-                                appointments={filteredAppointments}
-                                onEdit={(id) => {
-                                    const apt = allAppointments.find(a => a.id === id);
-                                    if (apt) {
-                                        setEditingAppointment({
-                                            id: apt.id,
-                                            patientId: apt.patientId,
-                                            patientName: apt.patientName,
-                                            patientKana: apt.patientKana,
-                                            visitDate: apt.visitDate,
-                                            duration: apt.duration,
-                                            staffId: apt.staffId,
-                                            memo: apt.memo,
-                                            adminMemo: apt.adminMemo
-                                        });
-                                        setIsReservationModalOpen(true);
-                                    }
-                                }}
-                                onDelete={(id) => setDeleteTargetId(id)}
-                                onCheckIn={handleCheckIn}
-                                onComplete={handleComplete}
-                            />
-                        </div>
-
-                        {/* Right: Sidebar */}
-                        {isSidebarOpen && (
-                            <div className="w-[320px] shrink-0 bg-slate-50 border-l border-slate-200 flex flex-col h-full shadow-inner">
-                                <SidebarContainer
-                                    calendarContent={
-                                        <MiniCalendar
-                                            currentDate={currentDate}
-                                            highlightSelected={viewMode === 'daily'}
-                                            onDateSelect={(date) => {
-                                                setViewMode('daily');
-                                                router.push(`/reservation-v2?date=${date}`);
-                                            }}
-                                        />
-                                    }
-                                    todayListContent={
-                                        <TodayAppointmentsList
-                                            appointments={todayAppointments}
-                                            onPatientSelect={handlePatientSelect}
-                                            onCheckIn={handleCheckIn}
-                                            onComplete={handleComplete}
-                                        />
-                                    }
-                                />
-                            </div>
-                        )}
-                    </div>
+                            }
+                        }}
+                        onDelete={(id) => setDeleteTargetId(id)}
+                        onCheckIn={handleCheckIn}
+                        onComplete={handleComplete}
+                    />
                 </div>
             </div>
 
+            {/* ========== 共通モーダル ========== */}
             <ReservationModal
                 isOpen={isReservationModalOpen}
                 onClose={() => {
@@ -446,6 +484,6 @@ export function ReservationV2Client({
                     }
                 }}
             />
-        </div>
+        </>
     );
 }
