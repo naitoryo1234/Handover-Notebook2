@@ -7,7 +7,7 @@ import { ja } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { Appointment } from '@/services/appointmentServiceV2';
 import { cancelAppointmentAction, checkInAppointmentAction, completeAppointmentAction, cancelCheckInAction, undoAppointmentStatusAction } from '@/actions/appointmentActions';
-import { VoiceCommandResult } from '@/actions/voiceCommandActions';
+import { VoiceCommandResult, TimeRange } from '@/actions/voiceCommandActions';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { ReservationToolbar } from '@/components/reservation-v2/ReservationToolbar';
@@ -70,6 +70,7 @@ export function ReservationV2Client({
     const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
 
     const [showUnresolvedOnly, setShowUnresolvedOnly] = useState(false);
+    const [timeRange, setTimeRange] = useState<TimeRange | 'all'>('all');
 
     // Modal State
     const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
@@ -98,7 +99,8 @@ export function ReservationV2Client({
         || selectedStaffId !== 'all'
         || viewMode !== 'daily'
         || showUnassignedOnly
-        || showUnresolvedOnly;
+        || showUnresolvedOnly
+        || timeRange !== 'all';
 
     // フィルター適用後の予約リスト
     const filteredAppointments = useMemo(() => {
@@ -139,6 +141,21 @@ export function ReservationV2Client({
             result = result.filter(a => a.adminMemo && !a.isMemoResolved);
         }
 
+        // 時間帯フィルター
+        if (timeRange !== 'all') {
+            const ranges: Record<TimeRange, [number, number]> = {
+                morning: [0, 12],
+                afternoon: [12, 17],
+                evening: [17, 20],
+                night: [20, 24]
+            };
+            const [start, end] = ranges[timeRange];
+            result = result.filter(a => {
+                const hour = new Date(a.visitDate).getHours();
+                return hour >= start && hour < end;
+            });
+        }
+
         // 全期間モードの時の過去フィルタ
         if (viewMode === 'all' && !includePast) {
             const today = new Date(); // リアルタイムの今日
@@ -154,7 +171,7 @@ export function ReservationV2Client({
         result = result.sort((a, b) => new Date(a.visitDate).getTime() - new Date(b.visitDate).getTime());
 
         return result;
-    }, [initialAppointments, allAppointments, debouncedSearchQuery, selectedStaffId, viewMode, showUnassignedOnly, showUnresolvedOnly, includePast]);
+    }, [initialAppointments, allAppointments, debouncedSearchQuery, selectedStaffId, viewMode, showUnassignedOnly, showUnresolvedOnly, includePast, timeRange]);
 
     // フィルターをクリア
     const clearFilters = () => {
@@ -163,6 +180,7 @@ export function ReservationV2Client({
         setViewMode('daily'); // 今日（URLの日付）に戻す
         setShowUnassignedOnly(false);
         setShowUnresolvedOnly(false);
+        setTimeRange('all');
     };
 
     // 日付選択ハンドラ (カレンダー/指定日付ジャンプ用)
@@ -254,8 +272,36 @@ export function ReservationV2Client({
             toast.success('申し送りありの予約を表示', { duration: 2000 });
         }
 
+        // スタッフ名フィルター
+        if (result.staffName) {
+            const staff = staffList.find(s =>
+                s.name.includes(result.staffName!) ||
+                result.staffName!.includes(s.name)
+            );
+            if (staff) {
+                setSelectedStaffId(staff.id);
+                if (viewMode !== 'all') setViewMode('all');
+                toast.success(`${staff.name}の予約を表示`, { duration: 2000 });
+            } else {
+                toast.warning(`スタッフ「${result.staffName}」が見つかりません`, { duration: 2000 });
+            }
+        }
+
+        // 時間帯フィルター
+        if (result.timeRange) {
+            setTimeRange(result.timeRange);
+            if (viewMode !== 'all') setViewMode('all');
+            const labels: Record<TimeRange, string> = {
+                morning: '午前',
+                afternoon: '午後',
+                evening: '夕方',
+                night: '夜'
+            };
+            toast.success(`${labels[result.timeRange]}の予約を表示`, { duration: 2000 });
+        }
+
         // 解析失敗時はそのままテキスト検索
-        if (!result.name && !result.date && !result.period && !result.showUnassigned && !result.showUnresolved) {
+        if (!result.name && !result.date && !result.period && !result.showUnassigned && !result.showUnresolved && !result.staffName && !result.timeRange) {
             // 敬称を除去して検索（フォールバック）
             const cleanedText = result.rawText
                 .replace(/さん|様|さま|くん|ちゃん/g, '')
@@ -266,7 +312,7 @@ export function ReservationV2Client({
                 if (!includePast) setIncludePast(true);
             }
         }
-    }, [router, viewMode, includePast]);
+    }, [router, viewMode, includePast, staffList]);
 
     // 顧客選択ハンドラ (サイドバーからの遷移用)
     const handlePatientSelect = (patientName: string) => {
