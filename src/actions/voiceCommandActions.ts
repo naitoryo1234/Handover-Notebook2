@@ -10,6 +10,8 @@ export interface VoiceCommandResult {
     name?: string;           // 検索する名前（敬称除去済み）
     date?: string;           // ISO形式の日付 (yyyy-MM-dd) or null
     period?: 'daily' | 'all'; // 期間指定
+    showUnassigned?: boolean; // 担当未定フィルター
+    showUnresolved?: boolean; // 申し送りありフィルター
     action?: 'search' | 'filter' | 'navigate';
     rawText: string;         // 元のテキスト
     confidence: number;      // 解析の確信度 (0-1)
@@ -106,7 +108,9 @@ export async function parseVoiceCommand(rawText: string): Promise<ParseVoiceComm
 1. name: 人名を抽出（敬称「さん」「様」「さま」「くん」「ちゃん」は除去）
 2. date: 日付キーワード（today/tomorrow/next_week）または具体的な日付（1月15日など）
 3. period: 「全部」「一覧」「全期間」があれば "all"、日付指定があれば "daily"
-4. confidence: 解析の確信度（0.0〜1.0）
+4. showUnassigned: 「担当未定」「未割り当て」「担当者なし」があれば true
+5. showUnresolved: 「申し送り」「メモあり」「引き継ぎ」があれば true
+6. confidence: 解析の確信度（0.0〜1.0）
 
 【出力形式】
 JSONのみを出力してください。説明文は不要です。
@@ -114,6 +118,8 @@ JSONのみを出力してください。説明文は不要です。
   "name": "名前または空文字",
   "date": "today/tomorrow/next_week/1月15日形式/空文字",
   "period": "daily/all/空文字",
+  "showUnassigned": false,
+  "showUnresolved": false,
   "confidence": 0.9
 }`;
 
@@ -140,7 +146,9 @@ JSONのみを出力してください。説明文は不要です。
             name: parsed.name || undefined,
             date: resolvedDate,
             period: parsed.period || undefined,
-            action: parsed.name ? 'search' : (resolvedDate || parsed.period) ? 'filter' : undefined,
+            showUnassigned: parsed.showUnassigned || false,
+            showUnresolved: parsed.showUnresolved || false,
+            action: parsed.name ? 'search' : (resolvedDate || parsed.period || parsed.showUnassigned || parsed.showUnresolved) ? 'filter' : undefined,
             rawText: rawText,
             confidence: parsed.confidence || 0.5
         };

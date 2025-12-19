@@ -240,8 +240,22 @@ export function ReservationV2Client({
             toast.success('全期間の予約を表示', { duration: 2000 });
         }
 
+        // 担当未定フィルター
+        if (result.showUnassigned) {
+            setShowUnassignedOnly(true);
+            if (viewMode !== 'all') setViewMode('all');
+            toast.success('担当未定の予約を表示', { duration: 2000 });
+        }
+
+        // 申し送りありフィルター
+        if (result.showUnresolved) {
+            setShowUnresolvedOnly(true);
+            if (viewMode !== 'all') setViewMode('all');
+            toast.success('申し送りありの予約を表示', { duration: 2000 });
+        }
+
         // 解析失敗時はそのままテキスト検索
-        if (!result.name && !result.date && !result.period) {
+        if (!result.name && !result.date && !result.period && !result.showUnassigned && !result.showUnresolved) {
             // 敬称を除去して検索（フォールバック）
             const cleanedText = result.rawText
                 .replace(/さん|様|さま|くん|ちゃん/g, '')
