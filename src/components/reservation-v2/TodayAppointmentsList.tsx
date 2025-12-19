@@ -153,11 +153,11 @@ export function TodayAppointmentsList({
                             className={cn(
                                 "flex items-center gap-1.5 font-bold transition-all px-2 py-1 rounded-md",
                                 filterState?.unresolved
-                                    ? "bg-rose-200 text-rose-900 shadow-sm ring-1 ring-rose-400 animate-none"
-                                    : "text-rose-600 bg-rose-100/50 hover:bg-rose-100 animate-pulse"
+                                    ? "bg-rose-200 text-rose-900 shadow-sm ring-1 ring-rose-400"
+                                    : "text-rose-600 bg-rose-100/50 hover:bg-rose-100"
                             )}
                         >
-                            <AlertCircle className="w-3.5 h-3.5" />
+                            <AlertCircle className={cn("w-3.5 h-3.5", !filterState?.unresolved && "animate-pulse")} />
                             <span>申し送り {filteredAppointments.filter(a => a.adminMemo).length}件</span>
                         </button>
                     )}
