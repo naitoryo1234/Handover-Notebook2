@@ -92,7 +92,7 @@ export function SearchStatusBar({
                             onClick={() => onRemoveFilter('unresolved')}
                             className="flex items-center gap-1 px-1.5 py-0.5 md:px-2 md:py-1 bg-red-100 text-red-800 text-[10px] md:text-xs font-medium rounded md:rounded-md border border-red-200 whitespace-nowrap hover:bg-red-100/80 active:bg-red-200 transition-colors group"
                         >
-                            <span>送りのみ</span>
+                            <span>申し送り</span>
                             <X className="w-3 h-3 md:w-3.5 md:h-3.5 text-red-500 group-hover:text-red-700 transition-colors" />
                         </button>
                     )}

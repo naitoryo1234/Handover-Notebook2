@@ -463,7 +463,7 @@ export function ReservationToolbar({
                                                 }`}
                                         >
                                             <AlertCircle className="w-3.5 h-3.5" />
-                                            送 {stats.unresolvedMemos}
+                                            申し送り {stats.unresolvedMemos}
                                         </button>
                                     )}
                                 </div>
