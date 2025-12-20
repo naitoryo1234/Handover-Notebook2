@@ -142,7 +142,7 @@ export function ReservationV2Client({
 
         // 未解決メモのみ
         if (showUnresolvedOnly) {
-            result = result.filter(a => a.adminMemo && !a.isMemoResolved);
+            result = result.filter(a => a.adminMemo);
         }
 
         // 時間帯フィルター

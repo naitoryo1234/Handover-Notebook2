@@ -527,7 +527,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
     };
 
     return (
-        <div className="w-full h-full overflow-y-auto max-w-none pb-20 pt-1">
+        <div className="w-full h-full overflow-y-auto overflow-x-hidden pb-20 pt-1">
             {/* MOBILE VIEW (lg:hidden) */}
             <div className="lg:hidden flex flex-col gap-4">
                 {/* Mobile Tab Navigation */}
