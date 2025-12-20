@@ -8,6 +8,11 @@
 
 ### 変更内容
 
+- **iOS Safariビューポート修正** ⚡ NEW
+  - `layout.tsx`: `h-full` → `min-h-dvh` に変更
+  - `ReservationV2Client.tsx`: `h-screen` → `h-dvh` に変更
+  - iOS Safariでスクロール時に最後のカードが隠れる問題を解消
+
 - **デモ用サンプルデータの修正**
   - `seed.ts` のVIP・夕方予約データがDBに書き込まれていなかったバグを修正
   - 30名分のダミー顧客のフリガナを「カタカナ」固定から正しい読みに修正
@@ -32,8 +37,8 @@
   - `seed.ts` の型エラー (`staff = null` 代入) を修正
 
 ### 変更の背景
+- iOS Safariでは `100vh` がアドレスバーを含んだ高さで計算されるため、`dvh`（Dynamic Viewport Height）を使用することで動的なビューポートに対応
 - デモ直前の緊急対応として、サンプルデータの品質向上とフィルタ機能のバグ修正を実施
-- モバイルでのスクロール問題は `layout.tsx` の `overflow-hidden` 変更の副作用として発生していた
 
 ---
 

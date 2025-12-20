@@ -1,6 +1,6 @@
 # Project Status
 
-最終更新: 2025-12-20 15:55
+最終更新: 2025-12-20 16:21
 
 ---
 
@@ -12,21 +12,10 @@
 
 ## ✅ Completed (今回のセッション)
 
-- [x] **サンプルデータ修正**
-  - VIP・夕方予約データのDB書き込み漏れを修正
-  - 30名分のダミー顧客フリガナを正しい読みに修正
-  - 17:30以降の予約データ生成保証
-
-- [x] **フィルタ機能バグ修正**
-  - 音声フィルタの競合問題（連続コマンドで動作しなくなる）を修正
-  - 申し送りフィルタのカウント・表示ロジック統一
-
-- [x] **モバイルUI修正**
-  - 予約ページ・顧客詳細ページのスクロール問題を修正
-  - 顧客詳細ページの横スクロール発生を抑制
-
-- [x] **Vercelビルドエラー対応**
-  - seed.tsの型エラー修正
+- [x] **iOS Safari ビューポート修正**
+  - `layout.tsx`: `h-full` → `min-h-dvh`
+  - `ReservationV2Client.tsx`: `h-screen` → `h-dvh`
+  - iPhone Safariでスクロール時に最後のカードが隠れる問題を解消
 
 ---
 
@@ -84,17 +73,15 @@
 ## 📝 Session Handover Notes
 
 ### コンテキスト
-デモ直前の緊急対応セッション。サンプルデータの品質問題と、フィルタ機能・モバイルUIのバグ修正を実施。
+短時間のバグ修正セッション。iPhone SafariでモバイルUIをテストした際に発見されたビューポート問題を修正。
 
 ### 決定事項
-- **申し送りフィルタ**: 「未解決のみ」ではなく「申し送りあり全件」を表示するように変更（ユーザー要望）
-- **サンプルデータ**: 有名人の名前を使用したダミーデータに正しいフリガナを設定
+- **dvhユニットの採用**: iOS Safariの動的ビューポートに対応するため、`100vh` を `100dvh` に置き換え
+- 修正は `fix/ios-viewport` ブランチで実装後、mainにマージ
 
 ### 主な修正ファイル
-- `prisma/seed.ts`: データ生成ロジック修正、フリガナ修正
-- `src/app/reservation-v2/ReservationV2Client.tsx`: 音声フィルタ競合修正、申し送りフィルタ修正
-- `src/components/reservation-v2/TodayAppointmentsList.tsx`: 日付表示追加、バッジカウント修正
-- `src/app/customers/[id]/CustomerDetailClient.tsx`: スクロール問題修正
+- `src/app/layout.tsx`: `h-full` → `min-h-dvh`
+- `src/app/reservation-v2/ReservationV2Client.tsx`: `h-screen` → `h-dvh`
 
 ### 次回の着手点
 1. 認証機能の再有効化
