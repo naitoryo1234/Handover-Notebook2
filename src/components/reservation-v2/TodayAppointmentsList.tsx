@@ -149,7 +149,7 @@ export function TodayAppointmentsList({
                             <span>担当未定 {filteredAppointments.filter(a => !a.staffName).length}件</span>
                         </button>
                     )}
-                    {filteredAppointments.filter(a => a.adminMemo && !a.isMemoResolved).length > 0 && (
+                    {filteredAppointments.filter(a => a.adminMemo).length > 0 && (
                         <button
                             onClick={() => onToggleFilter?.('unresolved')}
                             className={cn(
@@ -160,7 +160,7 @@ export function TodayAppointmentsList({
                             )}
                         >
                             <AlertCircle className={cn("w-3.5 h-3.5", !filterState?.unresolved && "animate-pulse")} />
-                            <span>申し送り {filteredAppointments.filter(a => a.adminMemo && !a.isMemoResolved).length}件</span>
+                            <span>申し送り {filteredAppointments.filter(a => a.adminMemo).length}件</span>
                         </button>
                     )}
                 </div>
