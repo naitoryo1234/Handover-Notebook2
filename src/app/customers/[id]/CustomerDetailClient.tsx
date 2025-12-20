@@ -1190,7 +1190,6 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
 
                                     {/* Extracted Data */}
                                     {(formattedResult.extracted_data.customer_name ||
-                                        formattedResult.extracted_data.visit_date ||
                                         (formattedResult.extracted_data.requests && formattedResult.extracted_data.requests.length > 0)) && (
                                             <div>
                                                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">🔍 抽出データ</h4>
@@ -1199,12 +1198,6 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                                                         <div className="flex items-center gap-2 text-sm">
                                                             <span className="font-medium text-slate-600">顧客名:</span>
                                                             <span className="text-slate-800">{formattedResult.extracted_data.customer_name}</span>
-                                                        </div>
-                                                    )}
-                                                    {formattedResult.extracted_data.visit_date && (
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <span className="font-medium text-slate-600">来店日:</span>
-                                                            <span className="text-slate-800">{formattedResult.extracted_data.visit_date}</span>
                                                         </div>
                                                     )}
                                                     {formattedResult.extracted_data.requests && formattedResult.extracted_data.requests.length > 0 && (
@@ -1220,6 +1213,20 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                                                 </div>
                                             </div>
                                         )}
+
+                                    {/* Review Warning */}
+                                    {formattedResult.needs_review && (
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                            <p className="text-sm text-amber-700 font-medium">⚠️ 要確認: この記録には曖昧な箇所があります</p>
+                                            {formattedResult.uncertain_terms && formattedResult.uncertain_terms.length > 0 && (
+                                                <ul className="mt-1 text-xs text-amber-600 list-disc list-inside">
+                                                    {formattedResult.uncertain_terms.map((term, i) => (
+                                                        <li key={i}>{term}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Footer */}

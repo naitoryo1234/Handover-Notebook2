@@ -3,18 +3,26 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { buildFullPrompt, getCurrentPreset, PresetType } from '@/lib/presets';
 
-// Response type for AI formatting
+// Response type for AI formatting (v2 - 改訂版スキーマ)
 export interface FormattedTextResult {
     summary: string;
     formatted_text: string;
     extracted_data: {
         customer_name?: string;
-        visit_date?: string;
         requests?: string[];
         body_parts?: string[];
+        meridian_points?: string[];
+        treatment?: string[];
         next_visit?: string;
         cautions?: string[];
     };
+    // 不確実性フィールド
+    needs_review: boolean;
+    uncertain_terms: string[];
+    missing_info: string[];
+    // PII保護フィールド
+    pii_detected: boolean;
+    pii_masked: string[];
 }
 
 export interface FormatTextResponse {
