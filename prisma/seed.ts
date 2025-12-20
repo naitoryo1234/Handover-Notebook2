@@ -44,14 +44,38 @@ async function main() {
         { name: '池田 美咲', kana: 'イケダ ミサキ', gender: '女性', memo: 'テニス肘。学生。', tags: ['テニス', '学生'], story: 'sports' },
     ];
 
-    // ダミーを30名に
-    const dummyNames = [
-        '伊藤 健二', '渡辺 美里', '田中 角栄', '高橋 大輔', '小林 麻耶',
-        '佐々木 希', '山本 耕史', '中村 獅童', '加藤 綾子', '吉田 羊',
-        '山口 達也', '松本 潤', '井上 真央', '木村 カエラ', '林 遣都',
-        '斎藤 飛鳥', '清水 富美加', '山崎 育三郎', '阿部 サダヲ', '森 七菜',
-        '西島 秀俊', '北川 景子', '星野 源', '新垣 結衣', '大泉 洋',
-        '広瀬 すず', '菅田 将暉', '小松 菜奈', '佐藤 健', '上白石 萌音'
+    // ダミーを30名に (有名人シリーズ)
+    const dummyPatients = [
+        { name: '伊藤 健二', kana: 'イトウ ケンジ' },
+        { name: '渡辺 美里', kana: 'ワタナベ ミサト' },
+        { name: '田中 角栄', kana: 'タナカ カクエイ' },
+        { name: '高橋 大輔', kana: 'タカハシ ダイスケ' },
+        { name: '小林 麻耶', kana: 'コバヤシ マヤ' },
+        { name: '佐々木 希', kana: 'ササキ ノゾミ' },
+        { name: '山本 耕史', kana: 'ヤマモト コウジ' },
+        { name: '中村 獅童', kana: 'ナカムラ シドウ' },
+        { name: '加藤 綾子', kana: 'カトウ アヤコ' },
+        { name: '吉田 羊', kana: 'ヨシダ ヨウ' },
+        { name: '山口 達也', kana: 'ヤマグチ タツヤ' },
+        { name: '松本 潤', kana: 'マツモト ジュン' },
+        { name: '井上 真央', kana: 'イノウエ マオ' },
+        { name: '木村 カエラ', kana: 'キムラ カエラ' },
+        { name: '林 遣都', kana: 'ハヤシ ケント' },
+        { name: '斎藤 飛鳥', kana: 'サイトウ アスカ' },
+        { name: '清水 富美加', kana: 'シミズ フミカ' },
+        { name: '山崎 育三郎', kana: 'ヤマザキ イクサブロウ' },
+        { name: '阿部 サダヲ', kana: 'アベ サダオ' },
+        { name: '森 七菜', kana: 'モリ ナナ' },
+        { name: '西島 秀俊', kana: 'ニシジマ ヒデトシ' },
+        { name: '北川 景子', kana: 'キタガワ ケイコ' },
+        { name: '星野 源', kana: 'ホシノ ゲン' },
+        { name: '新垣 結衣', kana: 'アラガキ ユイ' },
+        { name: '大泉 洋', kana: 'オオイズミ ヨウ' },
+        { name: '広瀬 すず', kana: 'ヒロセ スズ' },
+        { name: '菅田 将暉', kana: 'スダ マサキ' },
+        { name: '小松 菜奈', kana: 'コマツ ナナ' },
+        { name: '佐藤 健', kana: 'サトウ タケル' },
+        { name: '上白石 萌音', kana: 'カミシライシ モネ' }
     ];
 
     let pIdCounter = 1000;
@@ -69,12 +93,12 @@ async function main() {
         }));
     }
     // Create Dummies
-    for (const name of dummyNames) {
+    for (const p of dummyPatients) {
         patients.push(await prisma.patient.create({
             data: {
                 pId: pIdCounter++,
-                name: name,
-                kana: 'カタカナ', // 簡略化
+                name: p.name,
+                kana: p.kana,
                 gender: Math.random() > 0.5 ? '男性' : '女性',
                 birthDate: new Date('1990-01-01'),
                 tags: JSON.stringify([]),
