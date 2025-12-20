@@ -25,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className="h-full">
-      <body className={`${inter.className} h-full bg-mesh-gradient text-slate-900`}>
+    <html lang="ja" className="min-h-dvh">
+      <body className={`${inter.className} min-h-dvh bg-mesh-gradient text-slate-900`}>
         <AuthProvider>
           <ToastProvider>
             <div className="h-full flex flex-col">

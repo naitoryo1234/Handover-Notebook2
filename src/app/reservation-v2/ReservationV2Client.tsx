@@ -444,7 +444,7 @@ export function ReservationV2Client({
     return (
         <>
             {/* ========== Mobile Layout (md未満) ========== */}
-            <div className="md:hidden flex flex-col h-screen max-h-screen bg-slate-50 overflow-hidden">
+            <div className="md:hidden flex flex-col h-dvh max-h-dvh bg-slate-50 overflow-hidden">
                 {/* モバイル用ツールバー */}
                 <div className="shrink-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm border-b border-slate-200 touch-none">
                     <ReservationToolbar
@@ -524,7 +524,7 @@ export function ReservationV2Client({
             </div>
 
             {/* ========== Desktop Layout (md以上) - 以前のレイアウトを復元 ========== */}
-            <div className="hidden md:flex h-screen max-h-screen bg-slate-50 overflow-hidden">
+            <div className="hidden md:flex h-dvh max-h-dvh bg-slate-50 overflow-hidden">
                 {/* 左: サイドバー */}
                 {isSidebarOpen && (
                     <div className="w-[300px] flex-none h-full border-r border-slate-200 bg-white z-20">
