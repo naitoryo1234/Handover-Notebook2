@@ -1,225 +1,240 @@
-import { PrismaClient } from '@prisma/client'
-import { setHours, setMinutes, subDays, addDays, format } from 'date-fns'
-import bcrypt from 'bcrypt'
 
-const prisma = new PrismaClient()
+import { PrismaClient } from '@prisma/client';
+import { addDays, subDays, setHours, setMinutes, format, addMinutes } from 'date-fns';
 
-// マスタデータ定義
-const patientDataList = [
-    { name: '清水 恵', kana: 'シミズ メグミ', gender: 'Female' },
-    { name: '田中 浩二', kana: 'タナカ コウジ', gender: 'Male' },
-    { name: '渡辺 さくら', kana: 'ワタナベ サクラ', gender: 'Female' },
-    { name: '山本 大輔', kana: 'ヤマモト ダイスケ', gender: 'Male' },
-    { name: '小林 美咲', kana: 'コバヤシ ミサキ', gender: 'Female' },
-    { name: '加藤 健一', kana: 'カトウ ケンイチ', gender: 'Male' },
-    { name: '吉田 優子', kana: 'ヨシダ ユウコ', gender: 'Female' },
-    { name: '佐々木 翔太', kana: 'ササキ ショウタ', gender: 'Male' },
-    { name: '松本 玲奈', kana: 'マツモト レナ', gender: 'Female' },
-    { name: '井上 拓也', kana: 'イノウエ タクヤ', gender: 'Male' },
-    { name: '木村 香織', kana: 'キムラ カオリ', gender: 'Female' },
-    { name: '林 修平', kana: 'ハヤシ シュウヘイ', gender: 'Male' },
-    { name: '斎藤 麻衣', kana: 'サイトウ マイ', gender: 'Female' },
-    { name: '山口 誠', kana: 'ヤマグチ マコト', gender: 'Male' },
-    { name: '森 陽子', kana: 'モリ ヨウコ', gender: 'Female' },
-    { name: '阿部 達也', kana: 'アベ タツヤ', gender: 'Male' },
-    { name: '池田 奈々', kana: 'イケダ ナナ', gender: 'Female' },
-    { name: '橋本 隆', kana: 'ハシモト タカシ', gender: 'Male' },
-    { name: '山下 里美', kana: 'ヤマシタ サトミ', gender: 'Female' },
-    { name: '中島 健吾', kana: 'ナカジマ ケンゴ', gender: 'Male' },
-];
+const prisma = new PrismaClient();
 
-const OCCUPATIONS = ['システムエンジニア', '営業職', '保育士', '経理事務', '美容師', 'トラック運転手', '教師', '主婦', '経営者', 'Webデザイナー'];
-
-const HOBBIES = ['テニス', 'ゴルフ', '登山', '映画鑑賞', '料理', 'ヨガ', 'サウナ', '読書', '釣り', 'ガーデニング'];
-
-const MEDICAL_CONDITIONS = [
-    { title: '肩こり（慢性）', detail: 'デスクワークによる眼精疲労からくる肩こり。僧帽筋上部の緊張強い。' },
-    { title: '腰痛（ヘルニア既往）', detail: 'L4/L5ヘルニア既往あり。寒くなると痛みが増す。前屈制限あり。' },
-    { title: '五十肩（回復期）', detail: '左肩関節周囲炎。夜間痛は消失。結帯動作での可動域制限が課題。' },
-    { title: '自律神経失調気味', detail: '季節の変わり目に不調。不眠傾向あり。リラックス目的の施術希望。' },
-    { title: 'ランナー膝', detail: '週末のランニング後に右膝外側に疼痛。腸脛靭帯の張り強い。' }
-];
-
-const SERVICE_PREFERENCES = [
-    '強揉み希望。痛いくらいが丁度いいとのこと。',
-    '揉み返しきやすいので、ソフトな指圧希望。',
-    '鍼は苦手。お灸中心で。',
-    '会話を楽しみたい。プライベートな話もOK。',
-    '静かにリラックスしたい。施術中の会話は必要最低限で。'
-];
-
-// ヘルパー: ランダム選択
-function pick<T>(array: T[]): T {
-    return array[Math.floor(Math.random() * array.length)];
-}
-
-// ヘルパー: 日付生成
-const today = new Date('2026-01-15T09:00:00');
-const setTime = (date: Date, hours: number, minutes: number) => setMinutes(setHours(date, hours), minutes);
+// 2025年12月20日を基準日とする
+const BASE_DATE = new Date('2025-12-20T00:00:00+09:00');
 
 async function main() {
-    console.log('🌱 Start seeding with COMPLETE demo data...');
+    console.log('🌱 Starting maximally enhanced seed (Evening Heavy Ver)...');
+    console.log('📅 Base Date:', BASE_DATE.toISOString());
 
-    // Clean up
-    await prisma.appointment.deleteMany({})
-    await prisma.clinicalRecord.deleteMany({})
-    await prisma.patient.deleteMany({})
-    await prisma.staff.deleteMany({})
+    // 1. Clean up existing data
+    await prisma.lineLinkRequest.deleteMany();
+    await prisma.lineMessage.deleteMany();
+    await prisma.lineChannel.deleteMany();
+    await prisma.appointment.deleteMany();
+    await prisma.clinicalRecord.deleteMany();
+    await prisma.attachment.deleteMany();
+    await prisma.staff.deleteMany();
+    await prisma.patient.deleteMany();
+    await prisma.systemSetting.deleteMany();
 
-    // Staff (with authentication)
-    const passwordHash = await bcrypt.hash('1111', 10);
-    const director = await prisma.staff.create({
-        data: { id: 'staff-001', name: '高橋 院長', role: 'Director', active: true, loginId: 'admin', passwordHash }
-    });
-    const staffMember = await prisma.staff.create({
-        data: { id: 'staff-002', name: '佐々木 スタッフ', role: 'Staff', active: true, loginId: 'staff', passwordHash }
-    });
+    console.log('🧹 Cleaned up database');
 
-    const staffs = [director, staffMember];
+    // 2. Create Staff
+    const staffMembers = await Promise.all([
+        prisma.staff.create({ data: { name: '院長', role: 'Director', active: true, loginId: 'admin' } }),
+        prisma.staff.create({ data: { name: '鈴木 スタッフ', role: 'Staff', active: true, loginId: 'suzuki' } }),
+        prisma.staff.create({ data: { name: '佐藤 スタッフ', role: 'Staff', active: true, loginId: 'sato' } })
+    ]);
+    const [admin, staff1, staff2] = staffMembers;
+    const allStaff = staffMembers;
 
-    // Generate 20 Patients
-    for (let i = 0; i < patientDataList.length; i++) {
-        const pData = patientDataList[i];
+    // 3. Create Patients (VIP + Filler)
+    const initialPatients = [
+        // ... (VIPs same as before) ...
+        { name: '鈴木 一郎', kana: 'スズキ イチロウ', gender: '男性', memo: '腰痛持ち。ゴルフ好き。', tags: ['VIP', '腰痛'], story: 'lumbago' },
+        { name: '鈴木 花子', kana: 'スズキ ハナコ', gender: '女性', memo: '肩こり。アロマ希望。', tags: ['肩こり', 'アロマ'], story: 'stiff_shoulder' },
+        { name: '山田 太郎', kana: 'ヤマダ タロウ', gender: '男性', memo: '遅刻癖あり。', tags: ['遅刻癖'], story: 'late_comer' },
+        { name: '山田 優子', kana: 'ヤマダ ユウコ', gender: '女性', memo: '産後ケア。', tags: ['産後', '子供連れ'], story: 'postpartum' },
+        { name: '池田 健太', kana: 'イケダ ケンタ', gender: '男性', memo: '五十肩治療中。', tags: ['五十肩'], story: 'frozen_shoulder' },
+        { name: '池田 美咲', kana: 'イケダ ミサキ', gender: '女性', memo: 'テニス肘。学生。', tags: ['テニス', '学生'], story: 'sports' },
+    ];
 
-        // Profile Generation
-        const occupation = pick(OCCUPATIONS);
-        const hobby = pick(HOBBIES);
-        const condition = pick(MEDICAL_CONDITIONS);
-        const preference = pick(SERVICE_PREFERENCES);
-        const birthYear = 1960 + Math.floor(Math.random() * 40); // 1960-2000
-        const birthDate = new Date(`${birthYear}-${Math.floor(Math.random() * 12) + 1}-${Math.floor(Math.random() * 28) + 1}`);
+    // ダミーを30名に
+    const dummyNames = [
+        '伊藤 健二', '渡辺 美里', '田中 角栄', '高橋 大輔', '小林 麻耶',
+        '佐々木 希', '山本 耕史', '中村 獅童', '加藤 綾子', '吉田 羊',
+        '山口 達也', '松本 潤', '井上 真央', '木村 カエラ', '林 遣都',
+        '斎藤 飛鳥', '清水 富美加', '山崎 育三郎', '阿部 サダヲ', '森 七菜',
+        '西島 秀俊', '北川 景子', '星野 源', '新垣 結衣', '大泉 洋',
+        '広瀬 すず', '菅田 将暉', '小松 菜奈', '佐藤 健', '上白石 萌音'
+    ];
 
-        // Pinned Note Generation
-        const pinnedNote = `【基本情報】
-・職業：${occupation}
-・趣味：${hobby}
-・生年月日：${format(birthDate, 'yyyy/MM/dd')} (${2026 - birthYear}歳)
+    let pIdCounter = 1000;
+    const patients = [];
 
-【主訴・身体状況】
-・${condition.title}
-⇒ ${condition.detail}
-
-【施術・接遇の注意点】
-・${preference}
-・連絡手段：電話（${i % 2 === 0 ? '平日夕方以降' : '土日のみ'}繋がりやすい）
-
-【次回の提案メモ】
-・${hobby}の話を聞くこと。最近大会があったか確認。
-・${i % 3 === 0 ? '回数券の案内をするタイミング。' : '自宅でのストレッチ継続確認。'}`;
-
-        const patient = await prisma.patient.create({
+    // Create VIPs
+    for (const p of initialPatients) {
+        patients.push(await prisma.patient.create({
             data: {
-                pId: 1000 + i + 1,
-                name: pData.name,
-                kana: pData.kana,
-                birthDate,
-                phone: `090-${1000 + i}-${1000 + i}`,
-                memo: pinnedNote,
-                gender: pData.gender
+                pId: pIdCounter++,
+                name: p.name, kana: p.kana, gender: p.gender,
+                memo: p.memo, tags: JSON.stringify(p.tags),
+                birthDate: new Date('1990-01-01'),
+            }
+        }));
+    }
+    // Create Dummies
+    for (const name of dummyNames) {
+        patients.push(await prisma.patient.create({
+            data: {
+                pId: pIdCounter++,
+                name: name,
+                kana: 'カタカナ', // 簡略化
+                gender: Math.random() > 0.5 ? '男性' : '女性',
+                birthDate: new Date('1990-01-01'),
+                tags: JSON.stringify([]),
+            }
+        }));
+    }
+
+    // 4. Generate Appointments
+    const getDate = (dayOffset: number, h: number, m: number) => {
+        const d = addDays(BASE_DATE, dayOffset);
+        d.setHours(h, m, 0, 0);
+        return d;
+    };
+
+    const appointments = [];
+
+    // --- VIP Stories ---
+    // 山田 優子: 14:30 担当未定・赤ちゃん連れ
+    appointments.push({
+        pIndex: 3, offset: 0, h: 14, m: 30, duration: 60, staff: null, status: 'scheduled',
+        memo: '骨盤矯正。ベビーカー。', adminMemo: '⚠️ 赤ちゃん連れ対応要。担当者調整中。', isMemoResolved: false
+    });
+    // 鈴木 一郎: 完了
+    appointments.push({ pIndex: 0, offset: 0, h: 9, m: 30, duration: 60, staff: admin, status: 'completed', memo: '腰痛メンテ' });
+    // 山田 太郎: 遅刻来店
+    appointments.push({ pIndex: 2, offset: 0, h: 10, m: 0, duration: 45, staff: staff1, status: 'arrived', arrivedAt: getDate(0, 10, 15), memo: '遅刻' });
+    // 池田 健太: 完了
+    appointments.push({ pIndex: 4, offset: 0, h: 11, m: 0, duration: 60, staff: admin, status: 'completed', memo: '五十肩' });
+    // 鈴木 花子: 明日予約
+    appointments.push({ pIndex: 1, offset: 1, h: 14, m: 0, duration: 90, staff: staff2, status: 'scheduled', memo: 'アロマ90分' });
+
+    // --- Evening Rush (Today 17:30 - 20:00) ---
+    // デモ用の夕方の混雑
+    const eveningSlots = [
+        { h: 17, m: 30, staff: admin, duration: 60, memo: '仕事帰り。首肩集中。' },
+        { h: 17, m: 30, staff: staff1, duration: 30, memo: '指名なし。クイック。' }, // 同時間帯
+        { h: 17, m: 30, staff: staff2, duration: 45, memo: '前回良かったので指名。', adminMemo: '前回担当: 佐藤' },
+
+        { h: 18, m: 0, staff: staff1, duration: 60, memo: '腰痛ひどい。' },
+        { h: 18, m: 30, staff: staff2, duration: 30, memo: '足裏30分' },
+        { h: 18, m: 45, staff: admin, duration: 60, memo: '全身調整', adminMemo: '⚠️ 新患。カルテ作成必要', isMemoResolved: false }, // 申し送り
+
+        { h: 19, m: 0, staff: staff1, duration: 60, memo: 'アロマ60分' },
+        { h: 19, m: 30, staff: staff2, duration: 45, memo: '鍼治療' },
+    ];
+
+    let pIdx = 6;
+    for (const slot of eveningSlots) {
+        appointments.push({
+            pIndex: pIdx++, // ダミー顧客を順番に使う
+            offset: 0,
+            h: slot.h, m: slot.m,
+            duration: slot.duration,
+            staff: slot.staff,
+            status: 'scheduled',
+            memo: slot.memo,
+            adminMemo: slot.adminMemo,
+            isMemoResolved: slot.isMemoResolved || true
+        });
+    }
+
+    // --- Filler Appointments (Volume & Variety) ---
+    const days = [-7, -6, -5, -4, -3, -2, -1, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+    const adminMemos = ['⚠️ クーポン利用', '回数券提案', '誕プレ', '前回注意', '同意書', '紹介カード', '担当変更?'];
+
+    // ★ SAVE THE DEFINED APPOINTMENTS (VIP & Evening) FIRST ★
+    for (const apt of appointments) {
+        // pIndexからpatient ID解決
+        const patientStub = patients.find(p => p.pId === 1000 + apt.pIndex) || patients[apt.pIndex];
+        if (!patientStub) continue;
+
+        const savedApt = await prisma.appointment.create({
+            data: {
+                patientId: patientStub.id,
+                staffId: apt.staff ? apt.staff.id : null,
+                startAt: getDate(apt.offset, apt.h, apt.m),
+                duration: apt.duration,
+                status: apt.status,
+                memo: apt.memo,
+                adminMemo: apt.adminMemo,
+                isMemoResolved: apt.isMemoResolved !== undefined ? apt.isMemoResolved : true,
+                arrivedAt: apt.arrivedAt,
             }
         });
 
-        console.log(`Creating history for ${pData.name}...`);
-
-        // History Generation (Timeline)
-        const visitCount = 10 + Math.floor(Math.random() * 15); // 10~25 records
-
-        for (let j = 0; j < visitCount; j++) {
-            const weeksAgo = (visitCount - j) * 2; // 2週間に1回ペース
-            const visitDate = subDays(today, weeksAgo * 7 + Math.floor(Math.random() * 3));
-            const staff = pick(staffs);
-
-            // Clinical Record
-            let subjective = '';
-            let assessment = '';
-
-            if (j === 0) {
-                subjective = `【初回】${condition.title}を訴え来院。\n仕事で${occupation}をしており負担が大きいとのこと。\n趣味の${hobby}も最近できていない。`;
-                assessment = '初回評価により可動域制限確認。施術方針説明。';
-            } else {
-                const improvement = j / visitCount; // 進行度
-                if (improvement < 0.3) {
-                    subjective = `痛みまだ強い(VAS 7/10)。仕事後の疲労感あり。`;
-                    assessment = '筋緊張緩和中心。';
-                } else if (improvement < 0.7) {
-                    subjective = `徐々に改善(VAS 4/10)。${hobby}を少し再開してみたとのこと。`;
-                    assessment = '可動域訓練強度アップ。';
-                } else {
-                    subjective = `調子良い(VAS 1/10)。メンテナンス希望。`;
-                    assessment = '全身調整。';
-                }
-            }
-
-            // Verify: Long content test (Lines)
-            if (j === 2) {
-                subjective = '【行数テスト用データ】\n1行目\n2行目\n3行目\n4行目\nここから先は「もっと見る」で表示されるはずです。\n確認用テキスト。';
-                assessment = '表示確認用';
-            }
-
+        // 完了ステータスの場合はカルテも作成
+        if (apt.status === 'completed') {
             await prisma.clinicalRecord.create({
                 data: {
-                    patientId: patient.id,
-                    staffId: staff.id,
-                    visitDate,
-                    subjective,
-                    assessment,
-                    metadata: JSON.stringify({ type: 'record' })
-                }
-            });
-
-            // Completed Appointment linked to this time
-            await prisma.appointment.create({
-                data: {
-                    patientId: patient.id,
-                    staffId: staff.id,
-                    startAt: setTime(visitDate, 10 + Math.floor(Math.random() * 8), 0),
-                    duration: 60,
-                    status: 'completed',
-                    memo: `施術 #${j + 1}`
-                }
-            });
-
-            // Occasional Memo (Phone, Email, etc.)
-            if (Math.random() < 0.2) {
-                const memoDate = addDays(visitDate, 3);
-                await prisma.clinicalRecord.create({
-                    data: {
-                        patientId: patient.id,
-                        staffId: staff.id,
-                        visitDate: memoDate,
-                        subjective: Math.random() > 0.5
-                            ? '電話あり：予約変更の相談。'
-                            : 'メール：次回の施術後に領収書発行希望。',
-                        metadata: JSON.stringify({ type: 'memo' })
-                    }
-                });
-            }
-        }
-
-        // Future Appointment (Randomly for half of patients)
-        if (Math.random() > 0.3) {
-            await prisma.appointment.create({
-                data: {
-                    patientId: patient.id,
-                    staffId: staffs[0].id,
-                    startAt: setTime(addDays(today, 3 + Math.floor(Math.random() * 10)), 10, 0),
-                    duration: 60,
-                    status: 'scheduled',
-                    memo: '次回予約'
+                    patientId: patientStub.id,
+                    staffId: apt.staff ? apt.staff.id : admin.id,
+                    visitDate: getDate(apt.offset, apt.h, apt.m),
+                    subjective: apt.memo || '特になし',
+                    assessment: '経過良好',
                 }
             });
         }
     }
 
-    console.log('✅ Seeding completed with COMPLETE rich data set.');
+    // Then create fillers
+    for (const offset of days) {
+        const dailyCount = Math.floor(Math.random() * 5) + 6; // 6-10件/日
+        for (let i = 0; i < dailyCount; i++) {
+            const p = patients[Math.floor(Math.random() * patients.length)];
+            const h = 10 + Math.floor(Math.random() * 8);
+            const m = Math.random() > 0.5 ? 0 : 30;
+            const durations = [30, 45, 60, 90];
+            const duration = durations[Math.floor(Math.random() * durations.length)];
+
+            // 夕方(17:30以降)の今日(0)は既に埋めたので避ける
+            if (offset === 0 && h >= 17) continue;
+
+            let status = 'scheduled';
+            if (offset < 0) status = Math.random() > 0.1 ? 'completed' : 'cancelled';
+            if (offset === 0 && h < 12) status = 'completed';
+
+            let staff = allStaff[Math.floor(Math.random() * allStaff.length)];
+            if (status === 'scheduled' && Math.random() < 0.15) staff = null;
+
+            let adminMemo = null;
+            let isMemoResolved = true;
+            if (Math.random() < 0.25) {
+                adminMemo = adminMemos[Math.floor(Math.random() * adminMemos.length)];
+                if (offset >= 0) isMemoResolved = Math.random() > 0.7; // 30%未解決
+            }
+
+            await prisma.appointment.create({
+                data: {
+                    patientId: p.id,
+                    staffId: staff ? staff.id : null,
+                    startAt: getDate(offset, h, m),
+                    duration: duration,
+                    status: status,
+                    memo: offset < 0 ? '定期ケア' : 'Web予約',
+                    adminMemo: adminMemo,
+                    isMemoResolved: isMemoResolved,
+                }
+            });
+
+            if (status === 'completed') {
+                await prisma.clinicalRecord.create({
+                    data: {
+                        patientId: p.id,
+                        staffId: staff ? staff.id : admin.id,
+                        visitDate: getDate(offset, h, m),
+                        subjective: '特になし',
+                        assessment: '経過良好',
+                    }
+                });
+            }
+        }
+    }
+    console.log('✨ Maximized Seed finished.');
 }
 
 main()
-    .then(async () => {
-        await prisma.$disconnect()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
     })
-    .catch(async (e) => {
-        console.error(e)
-        await prisma.$disconnect()
-        process.exit(1)
-    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

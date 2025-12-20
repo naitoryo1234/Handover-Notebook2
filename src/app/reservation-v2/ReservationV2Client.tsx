@@ -289,16 +289,22 @@ export function ReservationV2Client({
             toast.success('全期間の予約を表示', { duration: 2000 });
         }
 
+        // フィルタの適用ロジック
+        // 注意: 音声コマンドは「新しいフィルタセット」として扱うため、競合する既存フィルタはクリアする
+
         // 担当未定フィルター
         if (result.showUnassigned) {
             setShowUnassignedOnly(true);
+            setShowUnresolvedOnly(false); // 排他ではないが、クリアしたほうが直感的かも？いや、ここは維持でもいいが、安全側に倒すならクリア
+            setSelectedStaffId('all'); // スタッフ指定とは排他
             if (viewMode !== 'all') setViewMode('all');
             toast.success('担当未定の予約を表示', { duration: 2000 });
         }
 
-        // 申し送りありフィルター
+        // 申し送りフィルター
         if (result.showUnresolved) {
             setShowUnresolvedOnly(true);
+            setShowUnassignedOnly(false);
             if (viewMode !== 'all') setViewMode('all');
             toast.success('申し送りありの予約を表示', { duration: 2000 });
         }
@@ -311,6 +317,8 @@ export function ReservationV2Client({
             );
             if (staff) {
                 setSelectedStaffId(staff.id);
+                // スタッフ指定時は「未定」はあり得ない
+                setShowUnassignedOnly(false);
                 if (viewMode !== 'all') setViewMode('all');
                 toast.success(`${staff.name}の予約を表示`, { duration: 2000 });
             } else {
@@ -318,9 +326,11 @@ export function ReservationV2Client({
             }
         }
 
-        // 時間帯フィルター
+        // 時間帯フィルター（これらが互いに競合するのでリセット重要）
         if (result.timeRange) {
             setTimeRange(result.timeRange);
+            setAfterHour(null); // クリア
+            setAroundHour(null); // クリア
             if (viewMode !== 'all') setViewMode('all');
             const labels: Record<TimeRange, string> = {
                 morning: '午前',
@@ -334,6 +344,8 @@ export function ReservationV2Client({
         // 「〇時以降」フィルター
         if (typeof result.afterHour === 'number') {
             setAfterHour(result.afterHour);
+            setTimeRange('all'); // クリア
+            setAroundHour(null); // クリア
             if (viewMode !== 'all') setViewMode('all');
             toast.success(`${result.afterHour}時以降の予約を表示`, { duration: 2000 });
         }
@@ -341,6 +353,8 @@ export function ReservationV2Client({
         // 「〇時周辺」フィルター
         if (typeof result.aroundHour === 'number') {
             setAroundHour(result.aroundHour);
+            setTimeRange('all'); // クリア
+            setAfterHour(null); // クリア
             if (viewMode !== 'all') setViewMode('all');
             toast.success(`${result.aroundHour}時周辺の予約を表示`, { duration: 2000 });
         }

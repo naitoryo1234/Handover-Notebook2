@@ -1,9 +1,11 @@
+
 'use client';
 
 import { useState } from 'react';
-import { format, parseISO, differenceInMinutes, isAfter, isBefore, addMinutes } from 'date-fns';
+import { format, parseISO, differenceInMinutes, isAfter, isBefore, addMinutes, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { RefreshCw, User, Clock, Hash, AlertCircle, FileText, LogIn, CheckCircle2 } from 'lucide-react';
+import { getNow } from '@/lib/dateUtils';
 import { Appointment } from '@/services/appointmentServiceV2';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -147,7 +149,7 @@ export function TodayAppointmentsList({
                             <span>担当未定 {filteredAppointments.filter(a => !a.staffName).length}件</span>
                         </button>
                     )}
-                    {filteredAppointments.filter(a => a.adminMemo).length > 0 && (
+                    {filteredAppointments.filter(a => a.adminMemo && !a.isMemoResolved).length > 0 && (
                         <button
                             onClick={() => onToggleFilter?.('unresolved')}
                             className={cn(
@@ -158,7 +160,7 @@ export function TodayAppointmentsList({
                             )}
                         >
                             <AlertCircle className={cn("w-3.5 h-3.5", !filterState?.unresolved && "animate-pulse")} />
-                            <span>申し送り {filteredAppointments.filter(a => a.adminMemo).length}件</span>
+                            <span>申し送り {filteredAppointments.filter(a => a.adminMemo && !a.isMemoResolved).length}件</span>
                         </button>
                     )}
                 </div>
@@ -175,7 +177,12 @@ export function TodayAppointmentsList({
                     filteredAppointments.map((apt) => {
                         const start = new Date(apt.visitDate);
                         const end = addMinutes(start, apt.duration);
-                        const timeRange = `${format(start, 'HH:mm')}-${format(end, 'HH:mm')}`;
+
+                        // 今日の日付と異なれば日付を表示する
+                        const isToday = isSameDay(start, getNow());
+                        const datePrefix = !isToday ? format(start, 'M/d(eee) ', { locale: ja }) : '';
+
+                        const timeRange = `${datePrefix}${format(start, 'HH:mm')} -${format(end, 'HH:mm')} `;
 
                         return (
                             <div
@@ -307,8 +314,8 @@ export function TodayAppointmentsList({
             <Dialog open={!!dialogState} onOpenChange={(open) => !open && setDialogState(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className={`flex items-center gap-2 ${dialogState?.type === 'admin' ? 'text-rose-600' : 'text-blue-600'
-                            }`}>
+                        <DialogTitle className={`flex items - center gap - 2 ${dialogState?.type === 'admin' ? 'text-rose-600' : 'text-blue-600'
+                            } `}>
                             {dialogState?.type === 'admin' ? (
                                 <>
                                     <AlertCircle className="w-5 h-5" />
@@ -327,10 +334,10 @@ export function TodayAppointmentsList({
                             <div className="text-sm text-slate-500 mb-1">対象のお客様</div>
                             <div className="font-bold text-lg">{dialogState?.appointment.patientName} 様</div>
                         </div>
-                        <div className={`p-4 rounded-lg border leading-relaxed whitespace-pre-wrap ${dialogState?.type === 'admin'
+                        <div className={`p - 4 rounded - lg border leading - relaxed whitespace - pre - wrap ${dialogState?.type === 'admin'
                             ? 'bg-rose-50 border-rose-100 text-rose-800'
                             : 'bg-blue-50 border-blue-100 text-blue-800'
-                            }`}>
+                            } `}>
                             {dialogState?.type === 'admin'
                                 ? dialogState.appointment.adminMemo
                                 : dialogState?.appointment.memo
