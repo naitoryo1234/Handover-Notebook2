@@ -114,3 +114,58 @@ model SystemSetting {
   description String?
   updatedAt   DateTime @updatedAt
 }
+
+// =====================================================
+// LINE Integration Module (Optional Feature)
+// =====================================================
+
+/// LINE公式アカウントのAPI認証情報（テナントごと）
+model LineChannel {
+  id                 String        @id @default(uuid())
+  name               String        // 表示名（例: 「○○院 予約通知」）
+  channelId          String        @unique // LINE Channel ID
+  channelSecret      String        // Webhook署名検証用
+  channelAccessToken String        // メッセージ送受信用
+  webhookUrl         String?       // 設定されたWebhook URL
+  isActive           Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  messages           LineMessage[]
+  linkRequests       LineLinkRequest[]
+}
+
+/// LINEメッセージ送受信履歴
+model LineMessage {
+  id          String      @id @default(uuid())
+  channelId   String      // どのチャンネル経由か
+  patientId   String?     // 紐付け済みの場合
+  lineUserId  String      // LINE User ID
+  direction   String      // "incoming" | "outgoing"
+  messageType String      // "text" | "image" | "sticker" | etc.
+  content     String      // テキスト内容または参照情報
+  rawPayload  String      @default("{}") // LINE APIの生レスポンス
+  status      String      @default("sent") // "sent" | "delivered" | "read" | "failed"
+  sentAt      DateTime    @default(now())
+  createdAt   DateTime    @default(now())
+
+  channel     LineChannel @relation(fields: [channelId], references: [id])
+
+  @@index([channelId, sentAt])
+  @@index([lineUserId])
+}
+
+/// 顧客とLINE User IDの紐付けリクエスト（一時トークン）
+model LineLinkRequest {
+  id        String      @id @default(uuid())
+  channelId String      // どのチャンネル用か
+  patientId String      // 紐付け対象の顧客
+  token     String      @unique // ランダム生成されたリンクトークン
+  expiresAt DateTime    // 有効期限（24時間など）
+  createdAt DateTime    @default(now())
+
+  channel   LineChannel @relation(fields: [channelId], references: [id])
+
+  @@index([patientId])
+}
+
