@@ -215,7 +215,8 @@ async function main() {
             if (offset < 0) status = Math.random() > 0.1 ? 'completed' : 'cancelled';
             if (offset === 0 && h < 12) status = 'completed';
 
-            let staff = allStaff[Math.floor(Math.random() * allStaff.length)];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let staff: any = allStaff[Math.floor(Math.random() * allStaff.length)];
             if (status === 'scheduled' && Math.random() < 0.15) staff = null;
 
             let adminMemo = null;
