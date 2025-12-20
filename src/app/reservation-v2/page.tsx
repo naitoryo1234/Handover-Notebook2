@@ -44,7 +44,7 @@ export default async function ReservationV2Page({ searchParams }: PageProps) {
     const serializedAllAppointments = JSON.parse(JSON.stringify(allAppointments));
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="h-full bg-slate-50">
             <ReservationV2Client
                 initialAppointments={initialAppointments}
                 allAppointments={serializedAllAppointments}

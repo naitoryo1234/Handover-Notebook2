@@ -34,7 +34,7 @@ export default function RootLayout({
               <ClientHeader />
 
               {/* メインコンテンツ */}
-              <main className="flex-1 overflow-y-auto relative">
+              <main className="flex-1 overflow-hidden relative">
                 <div className="h-full">
                   {children}
                 </div>
