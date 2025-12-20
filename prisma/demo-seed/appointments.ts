@@ -44,7 +44,7 @@ export function generateDemoAppointments(patientIds: string[], staffIds: string[
         },
         {
             patientId: patientIds[1], // サンプル花子
-            staffId: staffIds[1],     // 鈴木スタッフ
+            staffId: staffIds[1],     // 鈴木
             startAt: createDateTime(today, 10, 0),
             duration: 45,
             memo: '肩こり集中ケア',
@@ -54,7 +54,7 @@ export function generateDemoAppointments(patientIds: string[], staffIds: string[
         },
         {
             patientId: patientIds[2], // テスト次郎
-            staffId: staffIds[2],     // 佐藤スタッフ
+            staffId: staffIds[2],     // 田中
             startAt: createDateTime(today, 11, 0),
             duration: 60,
             memo: 'スポーツ後ケア',

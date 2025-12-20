@@ -27,8 +27,8 @@ async function main() {
     // 2. Create Staff
     const staffMembers = await Promise.all([
         prisma.staff.create({ data: { name: '院長', role: 'Director', active: true, loginId: 'admin' } }),
-        prisma.staff.create({ data: { name: '鈴木 スタッフ', role: 'Staff', active: true, loginId: 'suzuki' } }),
-        prisma.staff.create({ data: { name: '佐藤 スタッフ', role: 'Staff', active: true, loginId: 'sato' } })
+        prisma.staff.create({ data: { name: '鈴木', role: 'Staff', active: true, loginId: 'suzuki' } }),
+        prisma.staff.create({ data: { name: '田中', role: 'Staff', active: true, loginId: 'tanaka' } })
     ]);
     const [admin, staff1, staff2] = staffMembers;
     const allStaff = staffMembers;
@@ -135,7 +135,7 @@ async function main() {
     const eveningSlots = [
         { h: 17, m: 30, staff: admin, duration: 60, memo: '仕事帰り。首肩集中。' },
         { h: 17, m: 30, staff: staff1, duration: 30, memo: '指名なし。クイック。' }, // 同時間帯
-        { h: 17, m: 30, staff: staff2, duration: 45, memo: '前回良かったので指名。', adminMemo: '前回担当: 佐藤' },
+        { h: 17, m: 30, staff: staff2, duration: 45, memo: '前回良かったので指名。', adminMemo: '前回担当: 田中' },
 
         { h: 18, m: 0, staff: staff1, duration: 60, memo: '腰痛ひどい。' },
         { h: 18, m: 30, staff: staff2, duration: 30, memo: '足裏30分' },
