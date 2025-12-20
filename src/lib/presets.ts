@@ -203,3 +203,28 @@ ${rawText}
 
 ${OUTPUT_FORMAT}`;
 }
+
+/**
+ * DBからプリセット設定を読み込んで初期化
+ * Server Component や Server Action から呼び出す
+ */
+export async function initPresetFromDB(): Promise<PresetType> {
+    // 動的インポートでprismaを読み込み（循環参照を避けるため）
+    const { prisma } = await import('@/lib/db');
+
+    try {
+        const setting = await prisma.systemSetting.findUnique({
+            where: { key: 'voice_preset' }
+        });
+
+        if (setting?.value) {
+            const preset = setting.value as PresetType;
+            setCurrentPreset(preset);
+            return preset;
+        }
+    } catch (error) {
+        console.error('Failed to load preset from DB:', error);
+    }
+
+    return currentPreset;
+}

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FileText, Calendar, Plus, ChevronRight, LayoutDashboard } from 'lucide-react';
+import { FileText, Calendar, Plus, ChevronRight, LayoutDashboard, Settings } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -15,13 +15,22 @@ export default function Home() {
           </div>
           <p className="text-slate-600 text-sm mt-1 ml-11">ようこそ、本日も業務を開始しましょう</p>
         </div>
-        <Link
-          href="/customers/new"
-          className={cn(buttonVariants({ size: "lg" }), "rounded-full px-6 shadow-md hover:shadow-lg transition-all")}
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          顧客登録
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/settings"
+            className="p-2.5 text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-all"
+            title="設定"
+          >
+            <Settings className="w-5 h-5" />
+          </Link>
+          <Link
+            href="/customers/new"
+            className={cn(buttonVariants({ size: "lg" }), "rounded-full px-6 shadow-md hover:shadow-lg transition-all")}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            顧客登録
+          </Link>
+        </div>
       </div>
 
       {/* Main Apps Grid */}
