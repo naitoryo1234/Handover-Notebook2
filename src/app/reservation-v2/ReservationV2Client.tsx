@@ -476,7 +476,7 @@ export function ReservationV2Client({
                 </div>
 
                 {/* モバイル用カードリスト */}
-                <div className="flex-1 overflow-y-auto overscroll-contain">
+                <div className="flex-1 overflow-y-scroll overscroll-contain">
                     <TodayAppointmentsList
                         appointments={filteredAppointments}
                         listLabel={listLabel}

@@ -165,7 +165,7 @@ export function TodayAppointmentsList({
             )}
 
             {/* List Content - Full Width */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 bg-slate-50">
+            <div className="flex-1 overflow-y-scroll overscroll-contain px-3 py-3 bg-slate-50">
                 {filteredAppointments.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-48 text-slate-400">
                         <AlertCircle className="w-8 h-8 mb-2 opacity-30" />
