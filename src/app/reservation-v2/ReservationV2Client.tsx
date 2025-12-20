@@ -430,9 +430,9 @@ export function ReservationV2Client({
     return (
         <>
             {/* ========== Mobile Layout (md未満) ========== */}
-            <div className="md:hidden flex flex-col h-screen max-h-screen bg-slate-50">
+            <div className="md:hidden flex flex-col h-screen max-h-screen bg-slate-50 overflow-hidden">
                 {/* モバイル用ツールバー */}
-                <div className="shrink-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm border-b border-slate-200">
+                <div className="shrink-0 z-20 shadow-sm bg-white/80 backdrop-blur-sm border-b border-slate-200 touch-none">
                     <ReservationToolbar
                         searchQuery={searchQuery}
                         onSearchChange={handleSearchChange}
@@ -476,7 +476,7 @@ export function ReservationV2Client({
                 </div>
 
                 {/* モバイル用カードリスト */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto overscroll-contain">
                     <TodayAppointmentsList
                         appointments={filteredAppointments}
                         listLabel={listLabel}

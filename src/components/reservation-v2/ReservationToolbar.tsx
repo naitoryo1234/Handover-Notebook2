@@ -97,7 +97,7 @@ export function ReservationToolbar({
     return (
         <div className="bg-white border-b border-slate-200">
             {/* Mobile View (< md) - Unified Single Header */}
-            <div className="md:hidden flex flex-col bg-white sticky top-0 z-20 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+            <div className="md:hidden flex flex-col bg-white sticky top-0 z-20 shadow-[0_1px_2px_rgba(0,0,0,0.03)] touch-none">
                 <div className="flex items-center gap-2 px-3 py-2.5 h-[60px]"> {/* Height fixed for consistency */}
 
                     {/* 1. Date Selector (Left) */}

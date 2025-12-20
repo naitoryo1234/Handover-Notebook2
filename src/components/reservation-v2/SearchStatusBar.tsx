@@ -54,7 +54,7 @@ export function SearchStatusBar({
     };
 
     return (
-        <div className="bg-emerald-50/90 border-b border-emerald-100 flex items-center justify-between transition-all px-3 py-1.5 md:px-6 md:py-3 cursor-default select-none">
+        <div className="bg-emerald-50/90 border-b border-emerald-100 flex items-center justify-between transition-all px-3 py-1.5 md:px-6 md:py-3 cursor-default select-none touch-none">
             {/* Left Content: Labels & Chips */}
             <div className="flex items-center gap-2 md:gap-3 flex-1 overflow-hidden">
                 {/* Desktop Label */}

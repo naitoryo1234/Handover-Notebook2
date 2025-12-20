@@ -143,7 +143,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
                 </div>
 
                 {/* Results / Recent */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto overscroll-contain">
                     {/* Loading */}
                     {isLoading && (
                         <div className="flex items-center justify-center py-8">

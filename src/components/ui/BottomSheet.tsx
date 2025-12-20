@@ -68,7 +68,7 @@ export function BottomSheet({ isOpen, onClose, children, title }: BottomSheetPro
                 </div>
 
                 {/* Body - Scrollable */}
-                <div className="overflow-y-auto p-6">
+                <div className="overflow-y-auto overscroll-contain p-6">
                     {children}
                 </div>
             </div>

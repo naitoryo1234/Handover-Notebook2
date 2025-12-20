@@ -169,7 +169,7 @@ export function MobileVoiceInput({ onCommit, isProcessing = false, trigger }: Mo
                     </Button>
                 </div>
 
-                <div className="flex-1 bg-slate-50 rounded-xl p-4 mb-6 overflow-y-auto border border-slate-100 shadow-inner">
+                <div className="flex-1 bg-slate-50 rounded-xl p-4 mb-6 overflow-y-auto overscroll-contain border border-slate-100 shadow-inner">
                     {isTranscribing ? (
                         <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
                             <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
