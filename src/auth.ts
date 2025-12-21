@@ -2,8 +2,10 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcrypt";
+import type { NextAuthConfig } from "next-auth";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+// NextAuth設定を分離（middleware用）
+export const authConfig: NextAuthConfig = {
     providers: [
         Credentials({
             name: "Staff Login",
@@ -53,6 +55,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         signIn: "/login",
     },
     callbacks: {
+        authorized({ auth, request: { nextUrl } }) {
+            const isLoggedIn = !!auth?.user;
+            const isOnLogin = nextUrl.pathname === '/login';
+            const isAuthEndpoint = nextUrl.pathname.startsWith('/api/auth');
+            const isStaticFile = nextUrl.pathname.startsWith('/_next') ||
+                nextUrl.pathname.includes('.') ||
+                nextUrl.pathname.startsWith('/favicon');
+
+            // 認証無効モード
+            if (process.env.NEXT_PUBLIC_AUTH_ENABLED === 'false') {
+                return true;
+            }
+
+            // 静的ファイル、ログインページ、認証APIは常に許可
+            if (isStaticFile || isOnLogin || isAuthEndpoint) {
+                return true;
+            }
+
+            // ログイン済みならダッシュボードへ
+            if (isLoggedIn) {
+                return true;
+            }
+
+            // 未ログインはログインページへリダイレクト
+            return false;
+        },
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
@@ -72,4 +100,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         strategy: "jwt",
     },
     trustHost: true,
-});
+};
+
+export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
