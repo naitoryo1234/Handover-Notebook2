@@ -46,3 +46,28 @@ export const StaffSchema = z.object({
 });
 
 export type StaffInput = z.infer<typeof StaffSchema>;
+
+// Appointment Schema (予約)
+export const AppointmentSchema = z.object({
+    patientId: z.string().min(1, '顧客を選択してください'),
+    visitDate: z.string().min(1, '日付を選択してください'),
+    visitTime: z.string().min(1, '時間を選択してください'),
+    duration: z.coerce.number().min(15, '15分以上を指定してください').max(480, '8時間以内を指定してください').optional().default(60),
+    staffId: z.string().optional().or(z.literal('')),
+    memo: z.string().optional(),
+    adminMemo: z.string().optional(),
+    operatorId: z.string().optional(),
+});
+
+export type AppointmentInput = z.infer<typeof AppointmentSchema>;
+
+// Timeline Memo Schema (タイムラインメモ)
+export const TimelineMemoSchema = z.object({
+    patientId: z.string().min(1, '顧客IDが必要です'),
+    content: z.string().min(1, 'メモ内容を入力してください'),
+    type: z.enum(['memo', 'record']).default('memo'),
+    flags: z.array(z.string()).optional().default([]),
+});
+
+export type TimelineMemoInput = z.infer<typeof TimelineMemoSchema>;
+

@@ -6,7 +6,7 @@
 
 ## 🎯 Current Phase
 
-**Phase 14: 認証機能の再有効化 ✅ 完了**
+**Phase 15: Zodバリデーション導入 ✅ 完了**
 
 ---
 
@@ -16,6 +16,11 @@
   - `middleware.ts` を修正し NextAuth.js 認証チェックを復活
   - 環境変数 `NEXT_PUBLIC_AUTH_ENABLED` で認証オン/オフ切り替え可能
   - `seed.ts` にスタッフのパスワードハッシュを追加
+
+- [x] **Zodバリデーション導入**
+  - `config/schema.ts` に `AppointmentSchema`, `TimelineMemoSchema` 追加
+  - `appointmentActions.ts` にバリデーション適用、`any`型を`unknown`に置換
+  - `patientActions.ts` にバリデーション適用
   - 動作確認: `/` アクセス → `/login` リダイレクト → ログイン成功
 
 ---

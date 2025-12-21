@@ -8,6 +8,15 @@ import { getNow } from '@/lib/dateUtils';
 import { getKanaVariants } from '@/lib/kanaUtils';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
+import { PatientSchema, TimelineMemoSchema } from '@/config/schema';
+import { z } from 'zod';
+
+// Quick update schema
+const QuickUpdateSchema = z.object({
+    name: z.string().min(1, '名前は必須です'),
+    kana: z.string().min(1, 'フリガナは必須です'),
+    phone: z.string().optional(),
+});
 
 /**
  * Quick update patient (name, kana, phone only)
@@ -17,17 +26,19 @@ export async function quickUpdatePatient(
     patientId: string,
     data: { name: string; kana: string; phone: string }
 ) {
-    if (!data.name || !data.kana) {
-        return { success: false, error: '名前とフリガナは必須です' };
+    const validated = QuickUpdateSchema.safeParse(data);
+    if (!validated.success) {
+        const firstError = Object.values(validated.error.flatten().fieldErrors).flat()[0] || 'バリデーションエラー';
+        return { success: false, error: firstError };
     }
 
     try {
         await prisma.patient.update({
             where: { id: patientId },
             data: {
-                name: data.name,
-                kana: data.kana,
-                phone: data.phone || null,
+                name: validated.data.name,
+                kana: validated.data.kana,
+                phone: validated.data.phone || null,
             }
         });
 
@@ -50,24 +61,23 @@ export async function addPatient(formData: FormData) {
         gender: formData.get('gender') as string,
         phone: formData.get('phone') as string,
         memo: formData.get('memo') as string,
-        tags: formData.get('tags') as string || undefined
-    }
+    };
 
-    if (!rawData.name || !rawData.kana) {
-        // Simple server-side validation
-        throw new Error('Name and Kana are required');
+    // Zodバリデーション
+    const validated = PatientSchema.safeParse(rawData);
+    if (!validated.success) {
+        const errors = validated.error.flatten().fieldErrors;
+        throw new Error(Object.values(errors).flat()[0] || 'バリデーションエラー');
     }
 
     // Process tags (comma separated string -> JSON array)
-    // Note: createPatient service might need adjustment if tags not passed
-    // But createPatient takes PatientCreateInput which expects tags as String (JSON)
-    // We should parse it here.
+    const tagsStr = formData.get('tags') as string;
     let tagsJson: string | undefined = undefined;
-    if (rawData.tags) {
-        tagsJson = JSON.stringify(rawData.tags.split(',').map(t => t.trim()).filter(Boolean));
+    if (tagsStr) {
+        tagsJson = JSON.stringify(tagsStr.split(',').map(t => t.trim()).filter(Boolean));
     }
 
-    const inputData = { ...rawData, tags: tagsJson };
+    const inputData = { ...validated.data, tags: tagsJson };
     const newPatient = await createPatient(inputData);
 
     revalidatePath('/');
@@ -518,8 +528,11 @@ export async function addPatientSimple(data: {
  * Add a memo to the timeline (Creates a ClinicalRecord)
  */
 export async function addTimelineMemo(patientId: string, content: string, type: 'memo' | 'record' = 'memo', flags: string[] = []) {
-    if (!content.trim()) {
-        return { success: false, error: 'メモの内容は必須です' };
+    // Zodバリデーション
+    const validated = TimelineMemoSchema.safeParse({ patientId, content, type, flags });
+    if (!validated.success) {
+        const firstError = Object.values(validated.error.flatten().fieldErrors).flat()[0] || 'バリデーションエラー';
+        return { success: false, error: firstError };
     }
 
     try {
@@ -533,11 +546,11 @@ export async function addTimelineMemo(patientId: string, content: string, type: 
 
         await prisma.clinicalRecord.create({
             data: {
-                patientId,
+                patientId: validated.data.patientId,
                 staffId: staff.id,
                 visitDate: new Date(),
-                subjective: content, // Use 'subjective' field for simple memo
-                metadata: JSON.stringify({ type, flags }) // Include type and flags
+                subjective: validated.data.content, // Use 'subjective' field for simple memo
+                metadata: JSON.stringify({ type: validated.data.type, flags: validated.data.flags }) // Include type and flags
             }
         });
 
