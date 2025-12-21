@@ -683,7 +683,7 @@ export async function deleteTimelineEntry(entryId: string, entryType: 'memo' | '
                         const filePath = join(process.cwd(), 'public', 'uploads', fileName);
                         try {
                             await unlink(filePath);
-                        } catch (e) {
+                        } catch (e: unknown) {
                             console.warn('Failed to delete file:', filePath, e);
                         }
                     }

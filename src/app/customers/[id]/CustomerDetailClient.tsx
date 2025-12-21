@@ -136,7 +136,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                 toast.dismiss(toastId);
                 toast.error(result.error || 'アップロードに失敗しました');
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.dismiss(toastId);
             toast.error('アップロードエラー');
@@ -157,7 +157,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
             } else {
                 toast.error('保存に失敗しました');
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.error('エラーが発生しました');
         } finally {
@@ -330,7 +330,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
             } else {
                 toast.error(result.error || '保存に失敗しました');
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.error('エラーが発生しました');
         } finally {
@@ -361,7 +361,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
             } else {
                 toast.error(result.error || 'AI整形に失敗しました');
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.error('AI処理中にエラーが発生しました');
         } finally {
@@ -436,7 +436,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                 setHasMore(false);
                 setTotal(0);
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.error('検索に失敗しました');
         } finally {
@@ -458,7 +458,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                 setTimeline(prev => [...prev, ...parsed]);
                 setHasMore(result.hasMore);
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.error('読み込みに失敗しました');
         } finally {
@@ -479,7 +479,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
             } else {
                 toast.error(result.error || '削除に失敗しました');
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.error('エラーが発生しました');
         } finally {
@@ -525,7 +525,7 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                 setAutoSetHandover(hasExtracted);
                 setShowFormattedResult(true);
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             toast.error('AI処理中にエラーが発生しました');
         } finally {

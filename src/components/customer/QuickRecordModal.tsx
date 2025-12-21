@@ -165,7 +165,7 @@ export function QuickRecordModal({ isOpen, onClose }: QuickRecordModalProps) {
                 // 複数候補 → 選択UI
                 setStep('matching');
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setError('処理中にエラーが発生しました');
             setStep('input');

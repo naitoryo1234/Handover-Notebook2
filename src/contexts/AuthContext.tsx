@@ -52,7 +52,7 @@ export function AuthProvider({ children, authEnabled, authPin }: AuthProviderPro
                 setIsAuthenticated(parsed.isAuthenticated);
                 setOperator(parsed.operator);
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('Failed to restore auth session:', e);
         }
         setIsLoading(false);

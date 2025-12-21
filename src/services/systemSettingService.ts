@@ -28,7 +28,7 @@ export async function getSystemSetting<T>(key: string): Promise<T | null> {
 
     try {
         return JSON.parse(setting.value) as T;
-    } catch (e) {
+    } catch (e: unknown) {
         console.error(`Failed to parse system setting for key: ${key}`, e);
         return null;
     }
