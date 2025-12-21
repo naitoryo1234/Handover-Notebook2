@@ -31,8 +31,9 @@ export async function transcribeAudio(formData: FormData) {
 
         return { success: true, text: transcription.text };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Groq Transcription Error:', error);
-        return { success: false, error: error.message || '文字起こし中にエラーが発生しました' };
+        // エラーメッセージをサニタイズ - 内部情報を露出させない
+        return { success: false, error: '音声の文字起こし中にエラーが発生しました。しばらくしてから再度お試しください。' };
     }
 }

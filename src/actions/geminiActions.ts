@@ -93,7 +93,8 @@ export async function formatVoiceText(
             if (errorMsg.includes('SAFETY')) {
                 return { success: false, error: 'コンテンツが安全性ポリシーに違反しています。' };
             }
-            return { success: false, error: `エラー: ${errorMsg}` };
+            // エラーメッセージをサニタイズ - 内部情報を露出させない
+            return { success: false, error: 'AI処理中にエラーが発生しました。しばらくしてから再度お試しください。' };
         }
 
         return { success: false, error: 'AI処理中に不明なエラーが発生しました' };
