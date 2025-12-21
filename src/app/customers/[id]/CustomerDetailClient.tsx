@@ -314,6 +314,11 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                 setTimeline(prev => [newEntry, ...prev]);
                 setTotal(prev => prev + 1);
 
+                // Clear formatted result if AI was used
+                if (formattedResult) {
+                    setFormattedResult(null);
+                }
+
                 setIsAddingMemo(false);
                 setNewMemoContent('');
                 setRecordType('memo');
@@ -403,8 +408,10 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                 toast.success('整形テキストを適用しました');
             }
 
+            // Keep formattedResult for saving when memo is added (don't clear yet)
+            // formattedResult will be saved in handleSaveMemo
             setShowFormattedResult(false);
-            setFormattedResult(null);
+            // Note: don't setFormattedResult(null) here - we need it for handleSaveMemo
         }
     };
 
@@ -588,6 +595,17 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                             {patient.memo || <span className="text-slate-400 italic">メモなし</span>}
                         </div>
                     </div>
+                    {/* メモ履歴へのリンク */}
+                    <button
+                        onClick={() => router.push(`/customers/${patient.id}/memos`)}
+                        className="w-full flex items-center justify-between p-3 bg-indigo-50 hover:bg-indigo-100 rounded-xl text-left transition-colors"
+                    >
+                        <div className="flex items-center gap-2">
+                            <StickyNote className="w-4 h-4 text-indigo-600" />
+                            <span className="text-sm font-medium text-indigo-700">メモ履歴</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-indigo-400" />
+                    </button>
                 </div>
 
                 {/* Mobile Content: Timeline Tab */}
@@ -725,6 +743,17 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                             )}
                         </div>
                     </div>
+                    {/* メモ履歴へのリンク (Desktop) */}
+                    <button
+                        onClick={() => router.push(`/customers/${patient.id}/memos`)}
+                        className="w-full flex items-center justify-between p-3 bg-indigo-50 hover:bg-indigo-100 rounded-xl text-left transition-colors"
+                    >
+                        <div className="flex items-center gap-2">
+                            <StickyNote className="w-4 h-4 text-indigo-600" />
+                            <span className="text-sm font-medium text-indigo-700">メモ履歴</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-indigo-400" />
+                    </button>
                 </div>
 
                 {/* RIGHT MAIN: Timeline History (Shared for both, visible depending on activeTab on mobile) */}
@@ -1257,6 +1286,11 @@ export function CustomerDetailClient({ patient, initialTimeline, initialHasMore,
                                             </label>
                                         )}
                                     </div>
+
+                                    {/* Hint */}
+                                    <p className="text-xs text-slate-500 text-center mb-3">
+                                        💡 適用後、入力欄で内容を編集できます
+                                    </p>
 
                                     <div className="flex justify-end gap-3">
                                         <button

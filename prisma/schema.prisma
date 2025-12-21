@@ -28,6 +28,7 @@ model Patient {
   appointments Appointment[]
   attachments  Attachment[]
   records      ClinicalRecord[]
+  voiceLogs    VoiceLog[]
 
   @@index([kana])
   @@index([phone])
@@ -106,6 +107,7 @@ model Staff {
   passwordHash String?
   appointments Appointment[]
   records      ClinicalRecord[]
+  voiceLogs    VoiceLog[]
 }
 
 model SystemSetting {
@@ -113,6 +115,31 @@ model SystemSetting {
   value       String
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+// =====================================================
+// Voice Input Log (AI整形結果の蓄積)
+// =====================================================
+
+/// 音声入力のAI整形結果を保存するログ
+model VoiceLog {
+  id             String   @id @default(uuid())
+  patientId      String?  // 紐付け顧客（任意）
+  staffId        String?  // 記録者
+  rawText        String   // 生の音声テキスト
+  formattedJson  String   // AI整形結果（JSON全体）
+  summary        String   // 要約（一覧表示用）
+  needsReview    Boolean  @default(false)
+  piiDetected    Boolean  @default(false)
+  presetUsed     String   @default("default") // 使用したプリセット
+  createdAt      DateTime @default(now())
+
+  patient        Patient? @relation(fields: [patientId], references: [id])
+  staff          Staff?   @relation(fields: [staffId], references: [id])
+
+  @@index([createdAt])
+  @@index([needsReview])
+  @@index([patientId])
 }
 
 // =====================================================
