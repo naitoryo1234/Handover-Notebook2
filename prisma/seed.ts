@@ -1,6 +1,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { addDays, subDays, setHours, setMinutes, format, addMinutes } from 'date-fns';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -24,11 +25,16 @@ async function main() {
 
     console.log('🧹 Cleaned up database');
 
-    // 2. Create Staff
+    // 2. Create Staff (with password hashes)
+    // Passwords: admin=1111, suzuki=2222, tanaka=3333
+    const adminHash = await bcrypt.hash('1111', 10);
+    const suzukiHash = await bcrypt.hash('2222', 10);
+    const tanakaHash = await bcrypt.hash('3333', 10);
+
     const staffMembers = await Promise.all([
-        prisma.staff.create({ data: { name: '院長', role: 'Director', active: true, loginId: 'admin' } }),
-        prisma.staff.create({ data: { name: '鈴木', role: 'Staff', active: true, loginId: 'suzuki' } }),
-        prisma.staff.create({ data: { name: '田中', role: 'Staff', active: true, loginId: 'tanaka' } })
+        prisma.staff.create({ data: { name: '院長', role: 'Director', active: true, loginId: 'admin', passwordHash: adminHash } }),
+        prisma.staff.create({ data: { name: '鈴木', role: 'Staff', active: true, loginId: 'suzuki', passwordHash: suzukiHash } }),
+        prisma.staff.create({ data: { name: '田中', role: 'Staff', active: true, loginId: 'tanaka', passwordHash: tanakaHash } })
     ]);
     const [admin, staff1, staff2] = staffMembers;
     const allStaff = staffMembers;

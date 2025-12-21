@@ -1,9 +1,12 @@
-// Simplified middleware - authentication check disabled for now
-// TODO: Re-enable full auth check with NextAuth.js auth() wrapper
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(request: NextRequest) {
+// 認証が無効化されているか確認
+// NEXT_PUBLIC_AUTH_ENABLED=false で認証スキップ（開発用）
+const isAuthDisabled = process.env.NEXT_PUBLIC_AUTH_ENABLED === "false";
+
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // 静的ファイルは除外
@@ -16,8 +19,29 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // For now, allow all requests
-    // Full auth protection will be re-enabled in a future update
+    // ログインページと認証APIは認証不要
+    if (pathname === "/login" || pathname.startsWith("/api/auth")) {
+        return NextResponse.next();
+    }
+
+    // 認証が無効の場合はすべて許可（開発モード）
+    if (isAuthDisabled) {
+        return NextResponse.next();
+    }
+
+    // JWTトークンを取得してセッションを確認
+    const token = await getToken({
+        req: request,
+        secret: process.env.AUTH_SECRET,
+    });
+
+    // セッションがない場合はログインページへリダイレクト
+    if (!token) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
+        return NextResponse.redirect(loginUrl);
+    }
+
     return NextResponse.next();
 }
 
