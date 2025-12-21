@@ -861,6 +861,39 @@ GEMINI_API_KEY=your_api_key_here
 
 ## 次回予定
 
-1. **Vercel デプロイ & 動作検証**: HTTPS環境での音声入力動作確認
-2. **認証機能の再有効化 (Next Priority)**
-3. **Zodバリデーション導入 & `any`型除去**
+1. **ダッシュボードのモバイル最適化**: カード2枚をモバイルでコンパクトに表示
+2. **売上管理システム（将来構想）**: 顧客・予約と連携するSales Notebook
+
+
+---
+
+## v3.2.0 (2025-12-21)
+
+### 変更内容
+- **セキュリティ強化（コード監査対応）**
+  - Zodバリデーション導入 (`AppointmentSchema`, `TimelineMemoSchema`)
+  - エラーメッセージのサニタイズ（内部情報漏洩防止）
+  - 未型指定 `catch` ブロックを `catch (e: unknown)` に修正（12箇所）
+  - `any` 型を `unknown` に置換（12→3箇所に削減）
+  - 認証ミドルウェア再有効化
+
+- **Vercel認証問題の根本修正**
+  - `auth.config.ts` を新規作成（エッジランタイム互換な設定分離）
+  - `auth.ts` を `authConfig` を拡張する形に変更
+  - `middleware.ts` をNextAuth.js v5推奨パターンに変更
+  - Prisma/bcrypt のエッジランタイム非互換問題を解決
+
+- **本番デプロイチェックリスト作成**
+  - `docs/deployment/PRODUCTION_CHECKLIST.md` を作成
+  - 環境変数、DB設定、ログイン情報変更の手順を文書化
+
+- **コード監査レポート更新**
+  - スコア: 64点 → 85点に向上
+  - 商用リリース可能レベルに到達
+
+### 変更の背景
+- 外部CTO視点のコード監査で指摘された致命的問題（認証無効化、バリデーション不足、any型乱用）を解決
+- Vercelでのログイン問題は、EdgeランタイムでPrisma/bcryptが動作しないことが原因だった
+- NextAuth.js v5の推奨パターン（auth.config.ts分離）で根本解決
+
+---
