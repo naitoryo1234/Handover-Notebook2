@@ -1,8 +1,13 @@
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
 
-// NextAuth.js v5の推奨パターン
-// auth.tsの authorized コールバックでルート保護を処理
-export default auth;
+/**
+ * エッジランタイム互換なミドルウェア
+ * 
+ * auth.config.ts のみをインポートし、Prisma/bcrypt を含まないため
+ * Vercel Edge Runtime で正常に動作する。
+ */
+export default NextAuth(authConfig).auth;
 
 export const config = {
     matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
